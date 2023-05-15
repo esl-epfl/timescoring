@@ -114,6 +114,6 @@ performancesNoSmooth= perfMetrics.performance_all9(predictions, trueLabels)
 # performance after 2 types of postprocessing (moving average and bayes smoothing)
 (performanceMetrics, smoothedPredictions) = perfMetrics.calculatePerformanceAfterVariousSmoothing(predictions, trueLabels,predProbab)
 
-# visualizing postprovessed labels 
+# visualizing postprocessed labels 
 perfMetrics.plotInterp_PredAndConf(trueLabels,predictions, predProbab, smoothedPredictions, 'PredictionVisualization')
 ```
