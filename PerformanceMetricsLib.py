@@ -10,7 +10,8 @@ __email__ = "una.pale at epfl.ch"
 
 import numpy as np
 import torch
-
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
 class EventsAndDurationPerformances ():
 	''' Set of functions to measure performance of ML models not on a sample-by-sample basis, 
@@ -22,10 +23,11 @@ class EventsAndDurationPerformances ():
 		self.toleranceFP_bef=int(PerfParams.toleranceFP_befEvent *self.samplFreq)  #how many samples before the event is still ok to be event without saying that it is false positive
 		self.toleranceFP_aft=int(PerfParams.toleranceFP_aftEvent * self.samplFreq) #how many samples after the event is still ok to be event without saying that it is false positive
 
-		self.eventStableLenToTest=PerfParams.eventStableLenToTest #window in which it smooths, in seconds
-		self.eventStableLenToTestIndx=int(PerfParams.eventStableLenToTest * self.samplFreq) #window in which it smooths, in num of samples
-		self.eventStablePercToTest= PerfParams.eventStablePercToTest #what percentage of labels needs to be 1 to say that it is 1
-		self.distanceBetweenEventsIndx =int(PerfParams.distanceBetween2events* self.samplFreq) #if events are closer then distanceBetweenEventsIndx then it merges them to one (puts all labels inbetween to 1 too), in num of samples
+		self.movingWinLen=PerfParams.movingWinLen #window in which it smooths, in seconds
+		self.movingWinLenIndx=int(PerfParams.movingWinLen * self.samplFreq) #the same as movingWinLen but in num of samples
+		self.movingWinPercentage= PerfParams.movingWinPercentage #what percentage of labels needs to be 1 to say that it is 1
+		self.distanceBetween2events=PerfParams.distanceBetween2events  #if events are closer then distanceBetweenEventsIndx then it merges them to one (puts all labels inbetween to 1 too), in seconds
+		self.distanceBetweenEventsIndx =int(PerfParams.distanceBetween2events* self.samplFreq) #the same as distanceBetween2events but in num of samples
 
 		self.bayesProbThresh=PerfParams.bayesProbThresh #bayes threshold
 
@@ -128,15 +130,14 @@ class EventsAndDurationPerformances ():
 						# totalTP = totalTP + tp0 #we already counted that one
 						totalFP = totalFP + fp0  # ideally fp0 should be 0, but if at the end we might have 1 fp
 						# flag_trueEvents[etIndx] = 1 it is already 1 so not needed again
-						flag_predEvents[epIndx] = 2  # 2 means overlaping but not the first match with siezure
+						flag_predEvents[epIndx] = 2  # 2 means overlapping but not the first match with seizure
 					# if one big pred event covering more ref
 					#     ref:         <---------->     <-------------->     <----->
 					#     hyp:              <------------------------------------------>
 					elif (tp0 == 1 and flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == 1):
 						# totalTP=totalTP+tp0 # HERE WE NEED TO DECIDE TO WE COUNT THEM AS TP OR NOT  !!!!
 						totalFP = totalFP + fp0  # we treat this as 1 FP
-						if (flag_trueEventsFPAround[
-							etIndx - 1] > 0 and fp_bef == 1):  # if there was FP after true event and already counted and now we want to count it again because of before
+						if (flag_trueEventsFPAround[etIndx - 1] > 0 and fp_bef == 1):  # if there was FP after true event and already counted and now we want to count it again because of before
 							totalFP = totalFP - 1
 						flag_trueEvents[etIndx] = 0  # it has to stay unmatched
 						# flag_predEvents[epIndx] = 1 #already matched
@@ -155,7 +156,7 @@ class EventsAndDurationPerformances ():
 						# totalTP = totalTP + tp0 #we already counted that one
 						totalFP = totalFP - 1 + fp0  # ideally fp0 should be 0, but if at the end we might have 1 fp, remove Fp from before
 						# flag_trueEvents[etIndx] = 1 it is already 1 so not needed again
-						flag_predEvents[epIndx] = 2  # 2 means overlaping but not the first match with siezure
+						flag_predEvents[epIndx] = 2  # 2 means overlapping but not the first match with seizure
 					# prdiction but not matched with true event
 					elif (tp0 == 0 and flag_predEvents[epIndx] == 0):
 						totalFP = totalFP + 1  # +fp0
@@ -170,7 +171,7 @@ class EventsAndDurationPerformances ():
 						a = 0
 					else:
 						# flag_predEvents[epIndx] = 1
-						print('ERROR: new case i havent covered')
+						print('ERROR: new case I havent covered')
 
 		# calculating final performance
 		numTrueEvent = len(trueEvents)
@@ -181,22 +182,24 @@ class EventsAndDurationPerformances ():
 		# precision =TP/ numPredEvent but if all is one big predicted event then thigs are wrong and value would be >1
 		if ((totalTP + totalFP) != 0):
 			precision = totalTP / (totalTP + totalFP)
-		else:
-			precision = np.nan  # 0
-			F1score = np.nan  # 0
+		else: #if only 0 predicted the whole time
+			precision = np.nan
+			F1score = np.nan
+			#sensitivity will be 0 in next if (if there are trueEvents)
 
-		# sensitivity= TP/ numTrueSeiy
+		# sensitivity= TP/ numTrueSeiz
 		if ((numTrueEvent) != 0):
 			sensitivity = totalTP / numTrueEvent
-		else:
+		else: #in case no true seizures in a file
 			sensitivity = np.nan
 			precision = np.nan
-			F1score = np.nan  # 0
+			F1score = np.nan
+
 
 		if ((sensitivity + precision) != 0):
 			F1score = (2 * sensitivity * precision) / (sensitivity + precision)
-		else:
-			F1score = np.nan  # 0
+		else: #if somehow there was no TP for senstivity and precision are 0
+			F1score = np.nan  # 0 - maybe it should be 0 ??
 
 		# checkups
 		# if ( (totalTP +totalFP)!= numPredEvent):
@@ -206,7 +209,7 @@ class EventsAndDurationPerformances ():
 		if (totalFP < len(np.where(flag_predEvents == -1)[0])):
 			print('sth wrong with counting FP')
 		if (totalTP != len(np.where(flag_predEvents == 1)[0])):
-			print('sth wrong with counting events 2')
+			print('sth wrong with counting true events')
 
 		# #visualize
 		# xvalues = np.arange(0, len(trueLab), 1)
@@ -244,19 +247,27 @@ class EventsAndDurationPerformances ():
 		temp = 2 * y_true - y_pred_smoothed  # where diff is 1 here both true and apredicted label are 1
 		durationTruePredictedEvent = len(temp[temp == 1])
 
-		if (durationTrueEvent == 0):
+		# Calculating sensitivity
+		if (durationTrueEvent == 0): #no true event
 			sensitivity = 0
 			# print('No event in test data')
 		else:
 			sensitivity = durationTruePredictedEvent / durationTrueEvent
-		if (durationPredictedEvent == 0):
+
+		# Calculating precision
+		if (durationPredictedEvent == 0): #no predicted event
 			precision = 0
 			# print('No predicted event in test data')
 		else:
 			precision = durationTruePredictedEvent / durationPredictedEvent
-		if ((sensitivity + precision) == 0):
+
+		# Calculating F1score
+		if ((sensitivity + precision) == 0): #in case no overlap in true and predicted events
 			F1score_duration = 0
-			# print('Sensitivity and prediction are 0 in test data')
+			# print('No overlap in predicted events')
+		if ((durationTrueEvent == 0) and (durationPredictedEvent == 0)):  #in case no true or predicted event
+			F1score_duration= np.nan
+			# print('No true or predicted events')
 		else:
 			F1score_duration = 2 * sensitivity * precision / (sensitivity + precision)
 
@@ -288,6 +299,7 @@ class EventsAndDurationPerformances ():
 			numFPperHour = np.nan
 		numFPperDay = numFPperHour * 24
 
+		# last checkup
 		if ( sensE > 1.0 or precisE > 1.0 or F1E > 1.0 or sensD > 1.0 or precisD > 1.0 or F1D > 1.0 or F1DEmean > 1.0 or F1DEgeoMean > 1.0):
 			print('ERROR - perf measures impossibly big!')
 		# if (np.sum(trueLab)==0):
@@ -301,8 +313,8 @@ class EventsAndDurationPerformances ():
 		First: moving window with voting (if more then threshold of labels are 1 final label is 1 otherwise 0)
 		Second: merging events that are too close
 		Parameters:
-				- eventStableLenToTestIndx - window in which it smooths
-				- eventStablePercToTest - what percentage of labels needs to be 1 to say that it is 1
+				- movingWinLenIndx - window in which it smooths
+				- movingWinPercentage - what percentage of labels needs to be 1 to say that it is 1
 				- distanceBetweenEventsIndx - finally, if events are closer then distanceBetweenEventsIndx then it merges them to one (puts all labels inbetween to 1 too)
 		'''
 
@@ -311,10 +323,10 @@ class EventsAndDurationPerformances ():
 		else:
 			prediction=prediction0
 
-		p = torch.nn.ConstantPad1d((self.eventStableLenToTestIndx - 1, 0), 0)
-		# first classifying as true 1 if at laest  GeneralParams.eventStableLenToTest in a row is 1
-		unfolded_prediction = prediction.unfold(0, self.eventStableLenToTestIndx, 1).float()
-		smoothLabelsStep1 = p(torch.where(unfolded_prediction.mean(1) >= self.eventStablePercToTest, 1, 0))
+		p = torch.nn.ConstantPad1d((self.movingWinLenIndx - 1, 0), 0)
+		# first classifying as true 1 if at laest  GeneralParams.movingWinLen in a row is 1
+		unfolded_prediction = prediction.unfold(0, self.movingWinLenIndx, 1).float()
+		smoothLabelsStep1 = p(torch.where(unfolded_prediction.mean(1) >= self.movingWinPercentage, 1, 0))
 
 		# second part
 		smoothLabelsStep2 = torch.clone(smoothLabelsStep1)
@@ -326,17 +338,17 @@ class EventsAndDurationPerformances ():
 				smoothLabelsStep2[events[idx - 1][1]:events[idx][0]] = 1
 
 		if not torch.is_tensor(prediction0):
-			return (smoothLabelsStep2.numpy(), smoothLabelsStep1.numpy())
+			return (smoothLabelsStep1.numpy(), smoothLabelsStep2.numpy())
 		else:
 			return (smoothLabelsStep1, smoothLabelsStep2)
 
 
 	def smoothenLabels_Bayes(self, prediction0, probability0):
 		''' Returns labels bayes postprocessing
-		Calculates cummulative probability of event and non event over the window of size eventStableLenToTestIndx
+		Calculates cummulative probability of event and non event over the window of size movingWinLenIndx
 		if log (cong_pos /cong_ned )> bayesProbThresh then label is 1.
 		Parameters:
-			- eventStableLenToTestIndx - length of window over witch it accumulates probabilities
+			- movingWinLenIndx - length of window over witch it accumulates probabilities
 			- bayesProbThresh - if accumulated probablity is higher then this threshold then it is confident enough that it is event
 			- distanceBetweenEventsIndx - if two event events are closer then this, it merges them together
 
@@ -352,9 +364,9 @@ class EventsAndDurationPerformances ():
 		# convert probability to probability of pos
 		probability_pos = torch.where(prediction == 0, 1 - probability, probability)
 
-		# first classifying as true 1 if at laest  GeneralParams.eventStableLenToTest in a row is 1
-		p = torch.nn.ConstantPad1d((self.eventStableLenToTestIndx - 1, 0), 0)
-		unfolded_probability = probability_pos.unfold(0, self.eventStableLenToTestIndx, 1)
+		# first classifying as true 1 if at least  GeneralParams.movingWinLen in a row is 1
+		p = torch.nn.ConstantPad1d((self.movingWinLenIndx - 1, 0), 0)
+		unfolded_probability = probability_pos.unfold(0, self.movingWinLenIndx, 1)
 		conf_pos = unfolded_probability.prod(dim=1)
 		conf_neg = (1 - unfolded_probability).prod(dim=1)
 		conf = ((conf_pos + 0.00000001) / (conf_neg + 0.00000001)).log()
@@ -406,4 +418,44 @@ class EventsAndDurationPerformances ():
 
 
 		return (performancesAll, smoothedPredictions)
+
+
+	def plotInterp_PredAndConf(self, trueLabels,predLabels, predProbability, smoothedPredictions, outputFile):
+		FSize=12
+		colormap = np.array([[0, 134, 139], [139, 34, 82]]) / 256 # blue then red
+
+		YelemNames= ['TrueLabels', 'Raw']+list(smoothedPredictions.keys()) #'TrueLabels',
+		numYElems = len(YelemNames)
+		smoothedPredictions['Raw']=predLabels
+		smoothedPredictions['TrueLabels'] = trueLabels
+
+		fig1 = plt.figure(figsize=(10, 3), constrained_layout=False)
+		gs = GridSpec(numYElems, 1, figure=fig1)
+		fig1.subplots_adjust(wspace=2.2, hspace=0.2)
+		xValues = np.arange(0, len(trueLabels), 1)
+
+		for f in range(numYElems):
+			ax1 = fig1.add_subplot(gs[f, 0])
+			# plotting feature values
+			prob = np.reshape(predProbability, (-1, 1))
+			if (YelemNames[f]=='Raw'): #only if raw predictions give color transparency that marks confidence of prediction
+				c1 = np.hstack((colormap[smoothedPredictions[YelemNames[f]], :], np.power(prob, 4)))
+			else: #for postprocessed labels no confidence available (at the moment)
+				c1= np.hstack((colormap[smoothedPredictions[YelemNames[f]], :], np.reshape(np.ones(len(trueLabels)), (-1, 1)) ))
+
+			# plot bar plots
+			barsToPlot = np.ones(len(trueLabels))
+			ax1.bar(xValues, barsToPlot, color=c1, width=1.0 )
+			ax1.set_ylabel(YelemNames[f], rotation=0, fontsize=FSize)
+			ax1.yaxis.set_label_coords(-0.1,0)
+			ax1.set_xlim([-0.5,len(trueLabels)-0.5])
+			ax1.set_yticks([])
+			if (f==numYElems-1):
+				ax1.set_xlabel('Time [s]', fontsize=FSize)
+			ax1.grid()
+
+		fig1.show()
+		fig1.savefig(outputFile + '.png', bbox_inches='tight', dpi=100)
+		# fig1.savefig(outputFile+ '.svg', bbox_inches='tight')
+		plt.close(fig1)
 

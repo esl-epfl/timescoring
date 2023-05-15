@@ -12,8 +12,8 @@ class PerfParams:
     samplFreq = 1 #in Hz, e.g. 1 sample=1sec
     toleranceFP_befEvent = 1 #in sec
     toleranceFP_aftEvent = 2 #in sec
-    eventStableLenToTest = 5 #in sec
-    eventStablePercToTest = 0.5
+    movingWinLen = 5 #in sec
+    movingWinPercentage = 0.5
     distanceBetween2events = 3 #in sec
     bayesProbThresh =1.5 #bayes probability threshold (probably has to be tuned)
 
@@ -23,18 +23,27 @@ perfMetrics = EventsAndDurationPerformances(PerfParams)
 ############################################################################################
 ## DIFFERENT TEST EXAMPLES
 
-# trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
-# predictions=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
-# predProbab=np.array([0.9,0.8,0.7,0.8,0.7,0.8,0.9,0.6,0.5,0.6,0.7,0.8,0.9,0.9,0.9,0.6,0.7,0.8,0.8,0.8])
+trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
+predictions=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
+predProbab=np.array([0.9,0.8,0.7,0.8,0.7,0.8,0.9,0.6,0.5,0.6,0.7,0.8,0.9,0.9,0.9,0.6,0.7,0.8,0.8,0.8])
 
 # trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
 # predictions=np.array([0,0,1,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
 # predProbab=np.array([0.9,0.8,0.7,0.8,0.7,0.8,0.9,0.6,0.5,0.6,0.7,0.8,0.9,0.9,0.9,0.6,0.7,0.8,0.8,0.8])
 
-trueLabels=np.array([0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
-predictions=np.array([0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
-predProbab=np.array([0.9,0.8,0.7,0.8,0.7,0.8,0.9,0.8,0.7,0.8,0.6,0.5,0.6,0.7,0.8,0.9,0.9,0.9,0.6,0.7,0.8,0.8,0.8])
+# trueLabels=np.array([0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
+# predictions=np.array([0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
+# predProbab=np.array([0.9,0.8,0.7,0.8,0.7,0.8,0.9,0.8,0.7,0.8,0.6,0.5,0.6,0.7,0.8,0.9,0.9,0.9,0.6,0.7,0.8,0.8,0.8])
 
+
+# #testing detecting seizure at the end
+# trueLabels=np.array([0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1])
+# predictions=np.array([0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1])
+# predProbab=np.array([0.9,0.8,0.7,0.8,0.7,0.8,0.9,0.8,0.7,0.8,0.6,0.5,0.6,0.7,0.8,0.9,0.9])
+
+trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0])
+predictions=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0])
+predProbab=np.array([0.9,0.8,0.7,0.8,0.7,0.8,0.9,0.6,0.5,0.6,0.7,0.8,0.9,0.9,0.9,0.6,0.7,0.8,0.8,0.8,0.9,0.8,0.7,0.8,0.7,0.8,0.9,0.6,0.5,0.6,0.7,0.8,0.9,0.9,0.9,0.6,0.7,0.8,0.8,0.8])
 
 ############################################################################################
 ############################################################################################
@@ -52,6 +61,9 @@ print(performancesNoSmooth)
 (performanceMetrics, smoothedPredictions) = perfMetrics.calculatePerformanceAfterVariousSmoothing(predictions, trueLabels,predProbab)
 print(performanceMetrics)
 
-#visualization of predictions after smoothing
+
+############################################################################################
+## VISUALIZATION OF POSTPROCESSED LABELS
 allPredictSmoothing=np.vstack((trueLabels, predictions, smoothedPredictions['MovAvrg'], smoothedPredictions['MovAvrg&Merge'], smoothedPredictions['Bayes'], smoothedPredictions['Bayes&Merge']))
 print(allPredictSmoothing)
+perfMetrics.plotInterp_PredAndConf(trueLabels,predictions, predProbab, smoothedPredictions, 'PredictionVisualization')

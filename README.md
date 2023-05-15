@@ -86,6 +86,9 @@ Functions defined in *EventsAndDurationPerformances* class are:
 - Returns dictionary with 9 values for each postprocessing option:['Sensitivity events', 'Precision events', 'F1score events', 'Sensitivity duration','Precision duration', 'F1score duration', 'F1DEmean', 'F1DEgeoMean', 'numFPperDay']
 - Also returns postprocessed (smoothed) labels. 
 
+> plotInterp_PredAndConf
+- Function that plots in time true labels, raw predictions as well as postprocessed predictions
+
 ## Example of usage
 
 ```
@@ -110,4 +113,7 @@ performancesNoSmooth= perfMetrics.performance_all9(predictions, trueLabels)
 
 # performance after 2 types of postprocessing (moving average and bayes smoothing)
 (performanceMetrics, smoothedPredictions) = perfMetrics.calculatePerformanceAfterVariousSmoothing(predictions, trueLabels,predProbab)
+
+# visualizing postprovessed labels 
+perfMetrics.plotInterp_PredAndConf(trueLabels,predictions, predProbab, smoothedPredictions, 'PredictionVisualization')
 ```
