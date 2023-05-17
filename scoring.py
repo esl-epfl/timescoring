@@ -46,7 +46,7 @@ class _Scoring:
         self.fpRate = self.fp / (self.numSamples / self.fs / 3600 / 24)  # FP per day
     
     
-class EpochScoring(_Scoring):
+class WindowScoring(_Scoring):
     """Calculates performance metrics on the sample by sample basis"""
     
     def __init__(self, ref : Annotation, hyp : Annotation):
