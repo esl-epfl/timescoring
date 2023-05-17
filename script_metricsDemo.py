@@ -47,19 +47,19 @@ perfMetrics = EventsAndDurationPerformances(PerfParams)
 # trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0, 0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 # predictions=np.array([0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0])
 # predProbab=np.ones(len(predictions))
-#
-# # combination of everything  - example 5
-# # totalTP=2, totalFP=4, totalFN=1
-# trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-# predictions=np.array([0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0])
-# predProbab=np.ones(len(predictions))
 
-# no true labels - example 6
-# totalTP=0, totalFP=4,  totalFN=0
-trueLabels=np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+# combination of everything  - example 5
+# totalTP=2, totalFP=4, totalFN=1
+trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 predictions=np.array([0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0])
 predProbab=np.ones(len(predictions))
-#
+
+# # no true labels - example 6
+# # totalTP=0, totalFP=4,  totalFN=0
+# trueLabels=np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+# predictions=np.array([0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0])
+# predProbab=np.ones(len(predictions))
+# #
 # #simple example with different probabilities of labels
 # trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0])
 # predictions=np.array([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0])
@@ -74,16 +74,17 @@ predProbab=np.ones(len(predictions))
 # next three are on the level of duration (sensitivity, precision, F1score)
 # then mean or F1E and F1D, geoMean of F1E and F1DE
 # last is number of false positives that would be per day (linear interpolation from numFP in current sample)
+
 performancesNoSmooth= perfMetrics.performance_all9(predictions, trueLabels)
-print(performancesNoSmooth)
+# print(performancesNoSmooth)
 # TODO: Think of and implement visualization of matching - probably in event matching function and have parameter if ploting is on or off
 
 # performance after 2 types of postprocessing (moving average and bayes smoothing)
 (performanceMetrics, smoothedPredictions) = perfMetrics.calculatePerformanceAfterVariousSmoothing(predictions, trueLabels,predProbab)
-print(performanceMetrics)
+# print(performanceMetrics)
 
 ############################################################################################
 ## VISUALIZATION OF POSTPROCESSED LABELS
 allPredictSmoothing=np.vstack((trueLabels, predictions, smoothedPredictions['MovAvrg'], smoothedPredictions['MovAvrg&Merge'], smoothedPredictions['Bayes'], smoothedPredictions['Bayes&Merge']))
-print(allPredictSmoothing)
+# print(allPredictSmoothing)
 perfMetrics.plotInterp_PredAndConf(trueLabels,predictions, predProbab, smoothedPredictions, 'PredictionVisualization')

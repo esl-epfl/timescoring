@@ -336,6 +336,8 @@ class EventsAndDurationPerformances ():
 
 		numMissedEvent = numTrueEvent - np.sum(flag_trueEvents)
 
+		print('EVENT PERFORMANCE: totalTP:', totalTP, ' totalFP:', totalFP, ' totalFN:', numMissedEvent)
+
 		#################################
 		## CALCUALTING PERFORMANCE METRICS
 		# precision =TP/ numPredEvent but if all is one big predicted event then things are wrong and value would be >1
@@ -366,7 +368,7 @@ class EventsAndDurationPerformances ():
 			print('sth wrong with counting events')
 		if (totalFP < len(np.where(flag_predEvents == -1)[0])):
 			print('sth wrong with counting FP')
-		if (totalTP != len(np.where(flag_predEvents == 1)[0])):
+		if (totalTP != len(np.where(flag_trueEvents == 1)[0])):
 			print('sth wrong with counting true events')
 
 		# #visualize
@@ -442,7 +444,9 @@ class EventsAndDurationPerformances ():
 		'''
 
 		(sensE, precisE, F1E, totalFP) = self.performance_events(predLab, trueLab)
+		print('EVENT PERFORMANCE: sens:', sensE, ' prec:', precisE, ' F1score:', F1E)
 		(sensD, precisD, F1D) = self.performance_duration(predLab, trueLab)
+		print('SAMPLE PERFORMANCE: sens:', sensD, ' prec:', precisD, ' F1score:', F1D)
 
 		# calculate combinations
 		F1DEmean = (F1D + F1E) / 2
@@ -561,16 +565,21 @@ class EventsAndDurationPerformances ():
 		smoothedPredictions={}
 
 		# calculate different performance measures - only no Smooth
+		print('--> RAW PREDICTIONS')
 		performancesAll['RawPred'] = self.performance_all9(predLabels, label)
 
 		# smoothing using moving average and then merging
 		(smoothedPredictions['MovAvrg'], smoothedPredictions['MovAvrg&Merge']) = self.smoothenLabels_movingAverage(predLabels)
+		print('--> MOVING AVERAGE POSTPROCESSING')
 		performancesAll['MovAvrg'] = self.performance_all9(smoothedPredictions['MovAvrg'], label)
+		print('--> MOVING AVERAGE POSTPROCESSING WITH MERGING SEIZURES')
 		performancesAll['MovAvrg&Merge'] = self.performance_all9(smoothedPredictions['MovAvrg&Merge'], label)
 
 		# bayes smoothing
 		(smoothedPredictions['Bayes'], smoothedPredictions['Bayes&Merge']) = self.smoothenLabels_Bayes(predLabels, probabilityLabels)
+		print('--> BAYES POSTPROCESSING')
 		performancesAll['Bayes'] = self.performance_all9(smoothedPredictions['Bayes'], label)
+		print('--> BAYES POSTPROCESSING WITH MERGING SEIZURES')
 		performancesAll['Bayes&Merge'] = self.performance_all9(smoothedPredictions['Bayes&Merge'], label)
 
 
