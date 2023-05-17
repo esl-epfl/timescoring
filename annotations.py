@@ -21,6 +21,7 @@ class Annotation:
     """
     events: List[Tuple[int, int]]
     mask: NDArray[Shape["Size"], Bool]
+    fs : int
     
     def __init__(self, data, fs : int, numSamples : int = None):
         """Initialize an annotation instance.
@@ -46,7 +47,7 @@ class Annotation:
             TypeError: Raises a TypeError if input does not meet one of the expected
                 data types.
         """
- 
+        object.__setattr__(self, 'fs', fs)  # Write to frozen object
         # Annotation(events, fs, numSamples)
         # Init by providing a list of start, stop tuples for each event
         if numSamples is not None:
@@ -54,11 +55,11 @@ class Annotation:
             mask = np.zeros((numSamples,), dtype=np.bool_)
             for event in data:
                 mask[int(event[0]*fs):int(event[1]*fs)] = True
-            object.__setattr__(self, 'events', data) # Write to frozen object
-            object.__setattr__(self, 'mask', mask) # Write to frozen object
+            object.__setattr__(self, 'events', data)  # Write to frozen object
+            object.__setattr__(self, 'mask', mask)  # Write to frozen object
         
         # Annotation(mask, fs)
-        # Init provided by a binary mask with True labels during event epochs
+        # Init provided by a binary mask with True labels during event
         elif numSamples is None:
             events = list()
             tmpEnd = []
@@ -85,8 +86,8 @@ class Annotation:
                 for i in range(len(start_i)):
                     events.append((start_i[i] / fs, end_i[i] / fs))
                 events += tmpEnd  # add potential end edge effect
-            object.__setattr__(self, 'events', events) # Write to frozen object
-            object.__setattr__(self, 'mask', np.array(data, dtype=np.bool_)) # Write to frozen object
+            object.__setattr__(self, 'events', events)  # Write to frozen object
+            object.__setattr__(self, 'mask', np.array(data, dtype=np.bool_))  # Write to frozen object
             
         else:
             raise TypeError
