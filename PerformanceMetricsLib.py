@@ -22,6 +22,8 @@ class EventsAndDurationPerformances ():
 		self.numLabelsPerHour= 60 * 60 *self.samplFreq #number of samples per hour, needed to estimate numFP/hour
 		self.toleranceFP_bef=int(PerfParams.toleranceFP_befEvent *self.samplFreq)  #how many samples before the event is still ok to be event without saying that it is false positive
 		self.toleranceFP_aft=int(PerfParams.toleranceFP_aftEvent * self.samplFreq) #how many samples after the event is still ok to be event without saying that it is false positive
+		self.percOverlapNeeded=PerfParams.percOverlapNeeded
+		self.maxLenFP= PerfParams.maxLenFP*self.samplFreq #after how many samples we split FP into more
 
 		self.movingWinLen=PerfParams.movingWinLen #window in which it smooths, in seconds
 		self.movingWinLenIndx=int(PerfParams.movingWinLen * self.samplFreq) #the same as movingWinLen but in num of samples
@@ -54,22 +56,34 @@ class EventsAndDurationPerformances ():
 		stop_ref = ref[1]
 		start_hyp = hyp[0]
 		stop_hyp = hyp[1]
+		# calculate length of reference event to calculate percentage of overlap
+		len_ref= ref[1]-ref[0]
 
 		##### detect if hyp and ref have some overlap
 		tp = 0
-
+		len_ovlp=-1 #just to mark that its not good
 		#     ref:            |        <--------------------->
 		#     hyp:     ---------->
 		if (start_hyp <= start_ref and stop_hyp > start_ref - self.toleranceFP_bef):  # + tolerance
-			tp = 1
+			len_ovlp= stop_hyp-start_ref
+			# if (len_ovlp >0 and len_ovlp/len_ref> self.percOverlapNeeded):
+			# 	tp = 1
+
 		#     ref:              <--------------------->       |
 		#     hyp:                                        <----------------
 		elif (start_hyp < stop_ref + self.toleranceFP_aft and stop_hyp >= stop_ref):  # - tolerance
-			tp = 1
+			len_ovlp= stop_ref-start_hyp
+			# if (len_ovlp >0 and len_ovlp/len_ref> self.percOverlapNeeded):
+			# 	tp = 1
 		#     ref:              <--------------------->
 		#     hyp:                         <---->
 		elif (stop_hyp <= stop_ref and start_hyp >= start_ref):  # - tolerance
-			tp = 1
+			len_ovlp= stop_hyp-start_hyp
+			# if (len_ovlp >0 and len_ovlp/len_ref> self.percOverlapNeeded):
+			# 	tp = 1
+		#if there is certain overlap  update tp (as percentage of overlap)
+		if (len_ovlp > 0):
+			tp = len_ovlp / len_ref
 
 		#### detect fp
 		fp = 0
@@ -305,11 +319,12 @@ class EventsAndDurationPerformances ():
 					(tp0, fp0, fp_bef, fp_aft) = self.calc_TPAndFP(eTrue, ePred)
 
 					#if overlap detected
-					if (tp0==1):
-						flag_trueEvents[etIndx] = 1
-						flag_predEvents[epIndx] = flag_predEvents[epIndx]+ 1
+					if (tp0>0): #if some percentage of overlap detected
+						# flag_trueEvents[etIndx] = 1
+						flag_trueEvents[etIndx] =flag_trueEvents[etIndx]  + tp0 #summing up percentages of overlap
+						flag_predEvents[epIndx] = flag_predEvents[epIndx]+ 1 #still matched (even if not enough percentage overlap, because we dont want to count it as FP)
 
-						if (flag_predEvents[epIndx]>1): #already had FP before around matched pred event
+						if (flag_predEvents[epIndx]>1): #already had FP before for the same matched predicted event
 							if (flag_predEventsFPAround[epIndx]==-1 and fp_aft==1):
 								flag_predEventsFPAround[epIndx]==2 #mark that it has FP on both sides
 						else:
@@ -325,7 +340,10 @@ class EventsAndDurationPerformances ():
 		numTrueEvent = len(trueEvents)
 		numPredEvent = len(predEvents)
 
-		totalTP= sum(flag_trueEvents) #count how many true events was labeled as matched
+		#thredhold tureEvents with threshold if they had enough big overlap
+		flag_trueEventsThr=np.zeros(len(trueEvents))
+		flag_trueEventsThr[np.where(flag_trueEvents>self.percOverlapNeeded)[0]]=1
+		totalTP= sum(flag_trueEventsThr) #count how many true events was labeled as matched
 		# count FP
 		numNonMatchedPredictedEvents= len(np.where(flag_predEvents==0)[0])
 		numFParoundMatched=np.sum(np.abs(flag_predEventsFPAround))
@@ -334,7 +352,7 @@ class EventsAndDurationPerformances ():
 		numFPbetweenLongPredEvents=np.sum( helper[np.where(helper>0)])
 		totalFP=numNonMatchedPredictedEvents+numFParoundMatched+numFPbetweenLongPredEvents
 
-		numMissedEvent = numTrueEvent - np.sum(flag_trueEvents)
+		numMissedEvent = numTrueEvent - totalTP
 
 		print('EVENT PERFORMANCE: totalTP:', totalTP, ' totalFP:', totalFP, ' totalFN:', numMissedEvent)
 
