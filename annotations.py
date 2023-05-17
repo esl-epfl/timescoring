@@ -7,7 +7,7 @@ __email__ = "jonathan.dan at epfl.ch"
 import numpy as np
 
 from dataclasses import dataclass
-from typing import Any, List, Tuple
+from typing import List, Tuple
 from nptyping import Bool, NDArray, Shape
 
 
