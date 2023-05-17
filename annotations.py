@@ -68,18 +68,20 @@ class Annotation:
 
             # No transitions and first sample is positive -> event is duration of file
             if len(start_i) == 0 and data[0]:
-                events.append([0, (len(data) - 1) / fs])
+                events.append((0, len(data) / fs))
             else:
                 # Edge effect - First sample is an event
                 if data[0]:
-                    events.append([0, end_i[0] / fs])
+                    events.append((0, (end_i[0]+1) / fs))
                     end_i = np.delete(end_i, 0)
                 # Edge effect - Last event runs until end of file
                 if data[-1]:
                     if len(start_i):
-                        tmpEnd = [(start_i[-1] / fs, (len(data) - 1) / fs)]
+                        tmpEnd = [((start_i[-1]+1) / fs, len(data) / fs)]
                         start_i = np.delete(start_i, len(start_i) - 1)
                 # Add all events
+                start_i += 1
+                end_i += 1
                 for i in range(len(start_i)):
                     events.append((start_i[i] / fs, end_i[i] / fs))
                 events += tmpEnd  # add potential end edge effect
