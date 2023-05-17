@@ -87,22 +87,215 @@ class EventsAndDurationPerformances ():
 			fp_aft = 1
 		return (tp, fp, fp_bef, fp_aft)
 		
-		
+	#
+	# def performance_events_old(self, predLab, trueLab):
+	# 	'''
+	# 	Function that detects events in a stream of true labels and predictions
+	# 	Detects overlaps and measures sensitivity, precision , F1 score and number of false positives
+	# 	'''
+	# 	totalTP = 0
+	# 	totalFP = 0
+	# 	# transform to events
+	# 	predEvents = self.calculateStartsAndStops(predLab)
+	# 	trueEvents = self.calculateStartsAndStops(trueLab)
+	#
+	# 	# create flags for each event if it has been used
+	# 	flag_predEvents = np.zeros(len(predEvents))
+	# 	flag_trueEvents = np.zeros(len(trueEvents))
+	# 	flag_trueEventsFPAround = np.zeros(len(trueEvents))
+	# 	# goes through ref events
+	# 	if (len(trueEvents) == 0):
+	# 		totalFP = len(predEvents)
+	# 	else:
+	# 		for etIndx, eTrue in enumerate(trueEvents):
+	# 			for epIndx, ePred in enumerate(predEvents):
+	# 				(tp0, fp0, fp_bef, fp_aft) = self.calc_TPAndFP(eTrue, ePred)
+	#
+	# 				# if overlap detected (tp=1) and this refEvent hasnt been used
+	# 				#     ref:           <----->        <----->              <----->             <-------------->
+	# 				#     hyp:     <---------->          <---------->     <-------------->           <----->
+	# 				if (tp0 == 1 and flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == 0):
+	# 					totalTP = totalTP + tp0
+	# 					totalFP = totalFP + fp0
+	# 					flag_trueEvents[etIndx] = 1
+	# 					flag_predEvents[epIndx] = 1  # 1 means match
+	# 					if (fp0 == 2):
+	# 						flag_trueEventsFPAround[etIndx] = 2
+	# 					else:
+	# 						flag_trueEventsFPAround[etIndx] = fp_aft - fp_bef  # 1 if was after, or -1 if was before
+	# 				# if ref event was already matched and now we have some extra predicted event ones
+	# 				#     ref:           <------------------------------------------>
+	# 				#     hyp:     <---------->     <-------------->     <----->
+	# 				elif (tp0 == 1 and flag_trueEvents[etIndx] == 1 and flag_predEvents[epIndx] == 0):
+	# 					# totalTP = totalTP + tp0 #we already counted that one
+	# 					totalFP = totalFP + fp0  # ideally fp0 should be 0, but if at the end we might have 1 fp
+	# 					# flag_trueEvents[etIndx] = 1 it is already 1 so not needed again
+	# 					flag_predEvents[epIndx] = 2  # 2 means overlapping but not the first match with seizure
+	# 					# update flag_trueEventsFPAround if needed
+	# 					if (flag_trueEventsFPAround[etIndx]==-1 and fp_aft==1):
+	# 						flag_trueEventsFPAround[etIndx]=2 #if suddenly fp is now on both sides of seizure
+	# 					elif (flag_trueEventsFPAround[etIndx]==0 and fp_aft==1):
+	# 						flag_trueEventsFPAround[etIndx] = 1  # if before was within borders but now is too long after seizure
+	#
+	# 				# if one big pred event covering more ref
+	# 				#     ref:         <---------->     <-------------->     <----->
+	# 				#     hyp:              <------------------------------------------>
+	# 				# elif (tp0 == 1 and flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == 1):
+	# 				# 	# totalTP=totalTP+tp0 # HERE WE NEED TO DECIDE TO WE COUNT THEM AS TP OR NOT  !!!!
+	# 				# 	totalFP = totalFP + fp0  # we treat this as 1 FP
+	# 				# 	if (flag_trueEventsFPAround[etIndx - 1] > 0 and fp_bef == 1):  # if there was FP after true event and already counted and now we want to count it again because of before
+	# 				# 		totalFP = totalFP - 1
+	# 				# 	flag_trueEvents[etIndx] = 0  # it has to stay unmatched
+	# 				# 	# flag_predEvents[epIndx] = 1 #already matched
+	# 				elif (tp0 == 1 and flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == 1):
+	# 					totalTP=totalTP+tp0 # HERE WE NEED TO DECIDE TO WE COUNT THEM AS TP OR NOT  !!!!
+	# 					flag_trueEvents[etIndx] = 1  # HERE WE NEED TO DECIDE TO WE COUNT THEM AS TP OR NOT  !!!!
+	# 					# flag_predEvents[epIndx] = 1 #already matched
+	# 					#update number of FP
+	# 					#     ref:         <---------->     <-------------->
+	# 					#     hyp:              <---------------------->
+	# 					if (flag_trueEventsFPAround[etIndx - 1]==1 and fp_bef == 1):
+	# 						#dont change number of totalFP because thing in between them already counted as FP
+	# 						flag_trueEventsFPAround[etIndx] = -1
+	# 					#     ref:         <---------->     <-------------->
+	# 					#     hyp:       <----------------------------->
+	# 					if (flag_trueEventsFPAround[etIndx - 1] == 2 and fp_bef == 1):
+	# 						# dont change number of totalFP because thing in between them already counted as FP
+	# 						flag_trueEventsFPAround[etIndx] = -1
+	# 					#     ref:         <---------->     <-------------->
+	# 					#     hyp:               <----------------------------->
+	# 					if (flag_trueEventsFPAround[etIndx - 1] == 1 and fp_aft == 1):
+	# 						totalFP = totalFP + 1
+	# 						flag_trueEventsFPAround[etIndx] = 2
+	# 					#     ref:         <---------->     <-------------->
+	# 					#     hyp:       <-------------------------------------->
+	# 					if (flag_trueEventsFPAround[etIndx - 1] == 2 and fp_aft == 1):
+	# 						totalFP = totalFP + 1
+	# 						flag_trueEventsFPAround[etIndx] = 2
+	#
+	#
+	#
+	#
+	# 				# if pred event was named FP in pass with previous event but now matches this event
+	# 				# elif (tp0 == 1 and flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == -1):
+	# 				# 	totalTP = totalTP + tp0
+	# 				# 	totalFP = totalFP - 1 + fp0  # remove fp from before
+	# 				# 	flag_trueEvents[etIndx] = 1  # match event
+	# 				# 	if (fp0 == 2):
+	# 				# 		flag_trueEventsFPAround[etIndx] = 2
+	# 				# 	else:
+	# 				# 		flag_trueEventsFPAround[etIndx] = fp_aft - fp_bef  # 1 if was after, or -1 if was before
+	# 				# 	flag_predEvents[epIndx] = 1  # relabel this pred event
+	# 				elif (tp0 == 1 and flag_trueEvents[etIndx] == 0 and flag_trueEventsFPAround[epIndx-1] >=1 ):
+	# 					totalTP = totalTP + tp0
+	# 					totalFP = totalFP - 1 + fp_aft  # remove fp from before and add if lats too long
+	# 					flag_trueEvents[etIndx] = 1  # match event
+	# 					flag_predEvents[epIndx] = 1  # relabel this pred event
+	# 					if (fp0 == 2):
+	# 						flag_trueEventsFPAround[etIndx] = 2
+	# 					else:
+	# 						flag_trueEventsFPAround[etIndx] = fp_aft - fp_bef  # 1 if was after, or -1 if was before
+	#
+	#
+	#
+	# 				# if pred event was named FP in pass with previous event , now overlaps with event but this event was already matched
+	# 				elif (tp0 == 1 and flag_trueEvents[etIndx] == 1 and flag_predEvents[epIndx] == -1):
+	# 					# totalTP = totalTP + tp0 #we already counted that one
+	# 					totalFP = totalFP - 1 + fp0  # ideally fp0 should be 0, but if at the end we might have 1 fp, remove Fp from before
+	# 					# flag_trueEvents[etIndx] = 1 it is already 1 so not needed again
+	# 					flag_predEvents[epIndx] = 2  # 2 means overlapping but not the first match with seizure
+	# 				# prdiction but not matched with true event
+	# 				elif (tp0 == 0 and flag_predEvents[epIndx] == 0):
+	# 					totalFP = totalFP + 1  # +fp0
+	# 					flag_predEvents[epIndx] = -1  # -1 means used as FP
+	# 				elif (flag_predEvents[epIndx] == 2):  # already counted as part of previous event, we dont need to count it again
+	# 					a = 0
+	# 				elif (flag_predEvents[epIndx] == -1):  # already counted as FP, we dont need to count it again
+	# 					a = 0
+	# 				elif (flag_trueEvents[etIndx] == 1 and flag_predEvents[epIndx] == 1):  # both already matched
+	# 					a = 0
+	# 				elif (flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == 1):  # pred event was matched, true hasnt found yet
+	# 					a = 0
+	# 				else:
+	# 					# flag_predEvents[epIndx] = 1
+	# 					print('ERROR: new case I havent covered')
+	#
+	# 	# calculating final performance
+	# 	numTrueEvent = len(trueEvents)
+	# 	numPredEvent = len(predEvents)
+	#
+	# 	numMissedEvent = numTrueEvent - np.sum(flag_trueEvents)
+	#
+	# 	# precision =TP/ numPredEvent but if all is one big predicted event then thigs are wrong and value would be >1
+	# 	if ((totalTP + totalFP) != 0):
+	# 		precision = totalTP / (totalTP + totalFP)
+	# 	else: #if only 0 predicted the whole time
+	# 		precision = np.nan
+	# 		F1score = np.nan
+	# 		#sensitivity will be 0 in next if (if there are trueEvents)
+	#
+	# 	# sensitivity= TP/ numTrueSeiz
+	# 	if ((numTrueEvent) != 0):
+	# 		sensitivity = totalTP / numTrueEvent
+	# 	else: #in case no true seizures in a file
+	# 		sensitivity = np.nan
+	# 		precision = np.nan
+	# 		F1score = np.nan
+	#
+	#
+	# 	if ((sensitivity + precision) != 0):
+	# 		F1score = (2 * sensitivity * precision) / (sensitivity + precision)
+	# 	else: #if somehow there was no TP for senstivity and precision are 0
+	# 		F1score = np.nan  # 0 - maybe it should be 0 ??
+	#
+	# 	# checkups
+	# 	# if ( (totalTP +totalFP)!= numPredEvent):
+	# 	#     print('there are long pred events')
+	# 	if ((numMissedEvent + totalTP) != numTrueEvent):
+	# 		print('sth wrong with counting events')
+	# 	if (totalFP < len(np.where(flag_predEvents == -1)[0])):
+	# 		print('sth wrong with counting FP')
+	# 	if (totalTP != len(np.where(flag_predEvents == 1)[0])):
+	# 		print('sth wrong with counting true events')
+	#
+	# 	# #visualize
+	# 	# xvalues = np.arange(0, len(trueLab), 1)
+	# 	# fig1 = plt.figure(figsize=(16, 16), constrained_layout=False)
+	# 	# gs = GridSpec(1, 1, figure=fig1)
+	# 	# fig1.subplots_adjust(wspace=0.4, hspace=0.6)
+	# 	# fig1.suptitle('True and pred labels')
+	# 	# ax1 = fig1.add_subplot(gs[0,0])
+	# 	# ax1.plot(xvalues, trueLab,  'r')
+	# 	# ax1.plot(xvalues, predLab*0.9, 'k')
+	# 	# ax1.set_xlabel('Time')
+	# 	# ax1.legend(['True', 'Pred'])
+	# 	# #calcualte performance for duration to put in title
+	# 	# (sensitivity_duration, precision_duration, F1score_duration) = perfomance_duration(predLab, trueLab)
+	# 	# ax1.set_title('EVENTS: sensitivity '+ str(sensitivity)+' precision ' + str(precision)+' F1score '+ str(F1score)+' totalTP ' + str(totalTP)+ ' totalFP '+ str(totalFP) + '\n' +
+	# 	#               'DURATION: sensitivity ' + str(sensitivity_duration) + ' precision ' + str(precision_duration) + ' F1score ' + str(F1score_duration))
+	# 	# ax1.grid()
+	# 	# fig1.show()
+	# 	# fig1.savefig(folderOut + '/' +figName)
+	# 	# plt.close(fig1)
+	#
+	# 	return (sensitivity, precision, F1score, totalFP)
+
 	def performance_events(self, predLab, trueLab):
 		'''
 		Function that detects events in a stream of true labels and predictions
 		Detects overlaps and measures sensitivity, precision , F1 score and number of false positives
 		'''
-		totalTP = 0
-		totalFP = 0
-		# transform to events
+		#################################
+		## TRANSFORMING  BINARY LABELS TO EVENTS
 		predEvents = self.calculateStartsAndStops(predLab)
 		trueEvents = self.calculateStartsAndStops(trueLab)
 
+		#################################
+		## MATCHING EVENTS
 		# create flags for each event if it has been used
 		flag_predEvents = np.zeros(len(predEvents))
 		flag_trueEvents = np.zeros(len(trueEvents))
-		flag_trueEventsFPAround = np.zeros(len(trueEvents))
+		flag_predEventsFPAround = np.zeros(len(predEvents))
 		# goes through ref events
 		if (len(trueEvents) == 0):
 			totalFP = len(predEvents)
@@ -111,94 +304,59 @@ class EventsAndDurationPerformances ():
 				for epIndx, ePred in enumerate(predEvents):
 					(tp0, fp0, fp_bef, fp_aft) = self.calc_TPAndFP(eTrue, ePred)
 
-					# if overlap detected (tp=1) and this refEvent hasnt been used
-					#     ref:           <----->        <----->              <----->             <-------------->
-					#     hyp:     <---------->          <---------->     <-------------->           <----->
-					if (tp0 == 1 and flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == 0):
-						totalTP = totalTP + tp0
-						totalFP = totalFP + fp0
+					#if overlap detected
+					if (tp0==1):
 						flag_trueEvents[etIndx] = 1
-						flag_predEvents[epIndx] = 1  # 1 means match
-						if (fp0 == 2):
-							flag_trueEventsFPAround[etIndx] = 2
-						else:
-							flag_trueEventsFPAround[etIndx] = fp_aft - fp_bef  # 1 if was after, or -1 if was before
-					# if ref event was already matched and now we have some extra predicted event ones
-					#     ref:           <------------------------------------------>
-					#     hyp:     <---------->     <-------------->     <----->
-					elif (tp0 == 1 and flag_trueEvents[etIndx] == 1 and flag_predEvents[epIndx] == 0):
-						# totalTP = totalTP + tp0 #we already counted that one
-						totalFP = totalFP + fp0  # ideally fp0 should be 0, but if at the end we might have 1 fp
-						# flag_trueEvents[etIndx] = 1 it is already 1 so not needed again
-						flag_predEvents[epIndx] = 2  # 2 means overlapping but not the first match with seizure
-					# if one big pred event covering more ref
-					#     ref:         <---------->     <-------------->     <----->
-					#     hyp:              <------------------------------------------>
-					elif (tp0 == 1 and flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == 1):
-						# totalTP=totalTP+tp0 # HERE WE NEED TO DECIDE TO WE COUNT THEM AS TP OR NOT  !!!!
-						totalFP = totalFP + fp0  # we treat this as 1 FP
-						if (flag_trueEventsFPAround[etIndx - 1] > 0 and fp_bef == 1):  # if there was FP after true event and already counted and now we want to count it again because of before
-							totalFP = totalFP - 1
-						flag_trueEvents[etIndx] = 0  # it has to stay unmatched
-						# flag_predEvents[epIndx] = 1 #already matched
-					# if pred event was named FP in pass with previous event but now matches this event
-					elif (tp0 == 1 and flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == -1):
-						totalTP = totalTP + tp0
-						totalFP = totalFP - 1 + fp0  # remove fp from before
-						flag_trueEvents[etIndx] = 1  # match event
-						if (fp0 == 2):
-							flag_trueEventsFPAround[etIndx] = 2
-						else:
-							flag_trueEventsFPAround[etIndx] = fp_aft - fp_bef  # 1 if was after, or -1 if was before
-						flag_predEvents[epIndx] = 1  # relabel this pred event
-					# if pred event was named FP in pass with previous event , now overlaps with event but this event was already matched
-					elif (tp0 == 1 and flag_trueEvents[etIndx] == 1 and flag_predEvents[epIndx] == -1):
-						# totalTP = totalTP + tp0 #we already counted that one
-						totalFP = totalFP - 1 + fp0  # ideally fp0 should be 0, but if at the end we might have 1 fp, remove Fp from before
-						# flag_trueEvents[etIndx] = 1 it is already 1 so not needed again
-						flag_predEvents[epIndx] = 2  # 2 means overlapping but not the first match with seizure
-					# prdiction but not matched with true event
-					elif (tp0 == 0 and flag_predEvents[epIndx] == 0):
-						totalFP = totalFP + 1  # +fp0
-						flag_predEvents[epIndx] = -1  # -1 means used as FP
-					elif (flag_predEvents[epIndx] == 2):  # already counted as part of previous event, we dont need to count it again
-						a = 0
-					elif (flag_predEvents[epIndx] == -1):  # already counted as FP, we dont need to count it again
-						a = 0
-					elif (flag_trueEvents[etIndx] == 1 and flag_predEvents[epIndx] == 1):  # both already matched
-						a = 0
-					elif (flag_trueEvents[etIndx] == 0 and flag_predEvents[epIndx] == 1):  # pred event was matched, true hasnt found yet
-						a = 0
-					else:
-						# flag_predEvents[epIndx] = 1
-						print('ERROR: new case I havent covered')
+						flag_predEvents[epIndx] = flag_predEvents[epIndx]+ 1
 
-		# calculating final performance
+						if (flag_predEvents[epIndx]>1): #already had FP before around matched pred event
+							if (flag_predEventsFPAround[epIndx]==-1 and fp_aft==1):
+								flag_predEventsFPAround[epIndx]==2 #mark that it has FP on both sides
+						else:
+							if (fp0 == 2):
+								flag_predEventsFPAround[epIndx] = 2
+							else:
+								flag_predEventsFPAround[epIndx] = fp_aft - fp_bef  # 1 if was after, or -1 if was before
+
+					# if no overlap, we will count it later as FP
+
+		#################################
+		## COUNTING EVENTS - TOTAL NUMBER OF TP, FP, FN etc
 		numTrueEvent = len(trueEvents)
 		numPredEvent = len(predEvents)
 
+		totalTP= sum(flag_trueEvents) #count how many true events was labeled as matched
+		# count FP
+		numNonMatchedPredictedEvents= len(np.where(flag_predEvents==0)[0])
+		numFParoundMatched=np.sum(np.abs(flag_predEventsFPAround))
+
+		helper=flag_predEvents - np.ones(len(flag_predEvents))
+		numFPbetweenLongPredEvents=np.sum( helper[np.where(helper>0)])
+		totalFP=numNonMatchedPredictedEvents+numFParoundMatched+numFPbetweenLongPredEvents
+
 		numMissedEvent = numTrueEvent - np.sum(flag_trueEvents)
 
-		# precision =TP/ numPredEvent but if all is one big predicted event then thigs are wrong and value would be >1
+		#################################
+		## CALCUALTING PERFORMANCE METRICS
+		# precision =TP/ numPredEvent but if all is one big predicted event then things are wrong and value would be >1
 		if ((totalTP + totalFP) != 0):
 			precision = totalTP / (totalTP + totalFP)
-		else: #if only 0 predicted the whole time
+		else:  # if only 0 predicted the whole time
 			precision = np.nan
 			F1score = np.nan
-			#sensitivity will be 0 in next if (if there are trueEvents)
+		# sensitivity will be 0 in next if (if there are trueEvents)
 
 		# sensitivity= TP/ numTrueSeiz
 		if ((numTrueEvent) != 0):
 			sensitivity = totalTP / numTrueEvent
-		else: #in case no true seizures in a file
+		else:  # in case no true seizures in a file
 			sensitivity = np.nan
 			precision = np.nan
 			F1score = np.nan
 
-
 		if ((sensitivity + precision) != 0):
 			F1score = (2 * sensitivity * precision) / (sensitivity + precision)
-		else: #if somehow there was no TP for senstivity and precision are 0
+		else:  # if somehow there was no TP for senstivity and precision are 0
 			F1score = np.nan  # 0 - maybe it should be 0 ??
 
 		# checkups
@@ -232,10 +390,9 @@ class EventsAndDurationPerformances ():
 		# plt.close(fig1)
 
 		return (sensitivity, precision, F1score, totalFP)
-		
-		
+
 	def performance_duration(self, y_pred_smoothed, y_true):
-		'''Calculates performance metrics on the  sample by sample basis '''
+		'''Calculates performance metrics on the sample by sample basis '''
 
 		# total true event durations
 		durationTrueEvent = y_true.sum().item()
@@ -249,14 +406,14 @@ class EventsAndDurationPerformances ():
 
 		# Calculating sensitivity
 		if (durationTrueEvent == 0): #no true event
-			sensitivity = 0
+			sensitivity = np.nan #0
 			# print('No event in test data')
 		else:
 			sensitivity = durationTruePredictedEvent / durationTrueEvent
 
 		# Calculating precision
 		if (durationPredictedEvent == 0): #no predicted event
-			precision = 0
+			precision = np.nan #0
 			# print('No predicted event in test data')
 		else:
 			precision = durationTruePredictedEvent / durationPredictedEvent
@@ -265,7 +422,7 @@ class EventsAndDurationPerformances ():
 		if ((sensitivity + precision) == 0): #in case no overlap in true and predicted events
 			F1score_duration = 0
 			# print('No overlap in predicted events')
-		if ((durationTrueEvent == 0) and (durationPredictedEvent == 0)):  #in case no true or predicted event
+		elif ((durationTrueEvent == 0) or (durationPredictedEvent == 0)):  #in case no true or predicted event
 			F1score_duration= np.nan
 			# print('No true or predicted events')
 		else:
@@ -421,6 +578,7 @@ class EventsAndDurationPerformances ():
 
 
 	def plotInterp_PredAndConf(self, trueLabels,predLabels, predProbability, smoothedPredictions, outputFile):
+		''' function that plots in time true labels, raw predictions as well as postprocessed predictions '''
 		FSize=12
 		colormap = np.array([[0, 134, 139], [139, 34, 82]]) / 256 # blue then red
 
