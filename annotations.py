@@ -4,12 +4,11 @@
 __author__ = "Jonathan Dan"
 __email__ = "jonathan.dan at epfl.ch"
 
-import numpy as np
-
 from dataclasses import dataclass
 from typing import List, Tuple
-from nptyping import Bool, NDArray, Shape
 
+import numpy as np
+from nptyping import Bool, NDArray, Shape
 
 @dataclass(frozen=True)
 class Annotation:
