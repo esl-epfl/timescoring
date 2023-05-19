@@ -76,20 +76,24 @@ class EventScoring(_Scoring):
     class Parameters:
         """Parameters for event scoring"""
         
-        def __init__(self, toleranceSzOnset : float = 1,
-                     toleranceSzEnd : float = 10,
+        def __init__(self, toleranceStart : float = 1,
+                     toleranceEnd : float = 10,
                      minOverlap : float = 0.66,
                      maxEventDuration : float = 5*60):
             """Parameters for event scoring
 
             Args:
-                toleranceSzOnset (float): 1  # [seconds]
-                toleranceSzEnd (float): 10  # [seconds]
-                minOverlap (float): 0.66  # [relative]
-                maxEventDuration (float): 5*60  # [seconds]
+                toleranceStart (float): Allow some tolerance on the start of an event 
+                    without counting a false detection. Defaults to 1  # [seconds].
+                toleranceEnd (float): Allow some tolerance on the end of an event 
+                    without counting a false detection. Defaults to 10  # [seconds].
+                minOverlap (float): Minimum relative overlap between ref and hyp for 
+                    a detection. Defaults to 0.66  # [relative].
+                maxEventDuration (float): Automatically split events longer than a 
+                    given duration. Defaults to 5*60  # [seconds].
             """   
-            self.toleranceSzOnset = toleranceSzOnset
-            self.toleranceSzEnd = toleranceSzEnd
+            self.toleranceStart = toleranceStart
+            self.toleranceEnd = toleranceEnd
             self.minOverlap = minOverlap
             self.maxEventDuration = maxEventDuration      
 
@@ -120,7 +124,7 @@ class EventScoring(_Scoring):
                 
         # Count False detections
         self.fp = 0
-        extendedRef = EventScoring._extendEvents(ref, param.toleranceSzOnset, param.toleranceSzEnd)
+        extendedRef = EventScoring._extendEvents(ref, param.toleranceStart, param.toleranceEnd)
         for event in hyp.events:
             if np.any(~extendedRef.mask[int(event[0]*extendedRef.fs):int(event[1]*extendedRef.fs)]):
                 self.fp +=1
