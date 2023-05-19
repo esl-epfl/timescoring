@@ -7,7 +7,7 @@ class _Scoring:
     """" Base class for different scoring methods. The class provides the common
     attributes and computation of common scores based on these attributes.
     """
-    sefs : int
+    fs : int
     numSamples : int
     
     refTrue : int
@@ -65,3 +65,98 @@ class WindowScoring(_Scoring):
         self.fp = np.sum(hyp.mask) - self.tp
         
         self.computeScores()
+        
+        
+class EventScoring(_Scoring):
+    """Calculates performance metrics on an event basis"""
+    class Parameters:
+        """Parameters for event scoring
+        
+        Args:
+            toleranceSzOnset (float): 1  # [seconds]
+            toleranceSzEnd (float): 10  # [seconds]
+            minOverlap (float): 0.66  # [relative]
+            maxEventDuration (float): 5*60  # [seconds]
+        """
+        
+        toleranceSzOnset : float = 1  # [seconds]
+        toleranceSzEnd : float = 10  # [seconds]
+        minOverlap : float = 0.66  # [relative]
+        maxEventDuration : float = 5*60  # [seconds]
+        
+    
+    def __init__(self, ref : Annotation, hyp : Annotation, param : Parameters = Parameters()):
+        """Computes a scoring on an event basis.
+
+        Args:
+            ref (Annotation): Reference annotations (ground-truth)
+            hyp (Annotation): Hypotheses annotations (output of a ML pipeline)
+            param(EventScoring.Parameters, optional):  Parameters for event scoring.
+                Defaults to default values.
+        """
+        # Split long events to param.maxEventDuration
+        ref = EventScoring._splitLongEvents(ref, param.maxEventDuration)
+        hyp = EventScoring._splitLongEvents(hyp, param.maxEventDuration)
+        
+        self.fs = ref.fs
+        self.numSamples = len(ref.mask)
+        
+        self.refTrue = len(ref.events)
+        
+        # Count True detections
+        self.tp = 0
+        for event in ref.events:
+            if np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/(event[1]-event[0]) > param.minOverlap:
+                self.tp +=1
+                
+        # Count False detections
+        self.fp = 0
+        extendedRef = EventScoring._extendEvents(ref, param.toleranceSzOnset, param.toleranceSzEnd)
+        for event in hyp.events:
+            if np.any(~extendedRef.mask[int(event[0]*extendedRef.fs):int(event[1]*extendedRef.fs)]):
+                self.fp +=1
+        
+        self.computeScores()
+        
+        
+    def _splitLongEvents(events : Annotation, maxEventDuration : float) -> Annotation:
+        """Split events longer than maxEventDuration in shorter events.
+        Args:
+            events (Annotation): Annotation object containing events to split
+            maxEventDuration (float): maximum duration of an event [seconds]
+
+        Returns:
+            Annotation: Returns a new Annotation instance with all events split to
+                a maximum duration of maxEventDuration.
+        """
+        
+        shorterEvents = events.events.copy()
+        
+        for i, event in enumerate(shorterEvents):
+            if event[1] - event[0] > maxEventDuration:
+                shorterEvents[i] = (event[0], event[0] + maxEventDuration)
+                shorterEvents.insert(i + 1, (event[0] + maxEventDuration, event[1]))
+                
+        return Annotation(shorterEvents, events.fs, len(events.mask))
+    
+    
+    def _extendEvents(events : Annotation, before : float, after : float) -> Annotation:
+        """_summary_
+
+        Args:
+            events (Annotation): Annotation object containing events to extend
+            before (float): Time to extend before each event [seconds]
+            after (float):  Time to extend after each event [seconds]
+
+        Returns:
+            Annotation: Returns a new Annotation instance with all events extended
+        """
+        
+        extendedEvents = events.events.copy()
+        fileDuration = len(events.mask) / events.fs
+        
+        for i, event in enumerate(extendedEvents):
+            extendedEvents[i] = (max(0, event[0] - before), (min(fileDuration, event[1] + after)))
+            
+        return Annotation(extendedEvents, events.fs, len(events.mask))
+        
