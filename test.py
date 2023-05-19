@@ -128,13 +128,26 @@ class TestEventScoring(unittest.TestCase):
         np.testing.assert_equal(scores.precision, 0.5, 'precision no detections') 
         np.testing.assert_equal(scores.fpRate, 1*24, 'FP/day no detections')
         
+
+        # Tolerance before events
+        # REF      <----->
+        # HYP    <------->
+        ref = Annotation([(40, 60)], fs, numSamples)
+        hyp = Annotation([(39, 60)], fs, numSamples)
+        param = scoring.EventScoring.Parameters(toleranceSzOnset = 1)
+        scores = scoring.EventScoring(ref, hyp, param)
+        np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity no detections')
+        np.testing.assert_equal(scores.precision, 1, 'precision no detections') 
+        np.testing.assert_equal(scores.fpRate, 0, 'FP/day no detections')
+        
         # Split long events
         # REF <----->
         # HYP   <-------------------------->
         #SPLIT  <----------------><-------->
         ref = Annotation([(40, 60)], fs, numSamples)
         hyp = Annotation([(42, 65 + 6*60)], fs, numSamples)
-        scores = scoring.EventScoring(ref, hyp)
+        param = scoring.EventScoring.Parameters(maxEventDuration = 5*60)
+        scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity no detections')
         np.testing.assert_equal(scores.precision, 1/3, 'precision no detections') 
         np.testing.assert_equal(scores.fpRate, 2*24, 'FP/day no detections')
