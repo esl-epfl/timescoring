@@ -1,3 +1,9 @@
+''' Unit testing
+'''
+
+__author__ = "Jonathan Dan"
+__email__ = "jonathan.dan at epfl.ch"
+
 import unittest
 
 import numpy as np
@@ -29,7 +35,6 @@ class TestAnnotation(unittest.TestCase):
         mask = [0,1,1,0,0,0,1,1,1,0]
         events = [(0.1, 0.3), (0.6, 0.9)]
         TestAnnotation.checkMaskEvents(mask, events, fs, numSamples, 'Simple events')
-
 
         # Event == File duration
         mask = [1,1,1,1,1,1,1,1,1,1]
@@ -128,7 +133,6 @@ class TestEventScoring(unittest.TestCase):
         np.testing.assert_equal(scores.precision, 0.5, 'precision no detections') 
         np.testing.assert_equal(scores.fpRate, 1*24, 'FP/day no detections')
         
-
         # Tolerance before events
         # REF      <----->
         # HYP    <------->

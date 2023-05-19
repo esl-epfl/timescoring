@@ -1,3 +1,8 @@
+''' Scoring functions between a reference annotation (ground-truth) and hypotheses (e.g. ML output).
+'''
+
+__author__ = "Jonathan Dan, Una Pale"
+__email__ = "jonathan.dan at epfl.ch"
 
 import numpy as np
 
