@@ -32,14 +32,16 @@ All code for performance metric is in *PerformanceMetricsLib.py* whereas in *scr
 from PerformanceMetricsLib import *
 ```
 
-Class *EventsAndDurationPerformances* is defined that condains several parameters and functions. 
+Class *EventsAndDurationPerformances* is defined that contains several parameters and functions. 
 
 ### Parameters
 
 Parameters that need to be defined and passed to *EventsAndDurationPerformances* class are: 
-- samplFreq - sampling frequency of labels and predicitions
+- samplFreq - sampling frequency of labels and predictions, needed to calculate FP per day
 - toleranceFP_befEvent  - how much time [s] before event it is still ok to predict event without classifying it as false positive (FP)
 - toleranceFP_aftEvent -  how much time [s] after event it is still ok to predict event without classifying it as false positive (FP)
+- percOverlapNeeded - minimal overlap true event has to be overlapped with predicted event to be finally counted as matched [percentage of length if true event]
+- maxLenFP - max tolerable length [s] of false positive before it has to be split and counted as more FP
 - eventStableLenToTest - window length [s] in which it postprocesses and smooths labels
 - eventStablePercToTest - what percentage of labels needs to be 1 in eventStableLenToTest window to say that it is 1
 - distanceBetween2events - if events are closer then distanceBetween2events [s] then it merges them to one (puts all labels inbetween to 1 too)
@@ -50,16 +52,22 @@ Parameters that need to be defined and passed to *EventsAndDurationPerformances*
 Functions defined in *EventsAndDurationPerformances* class are: 
 
 > calculateStartsAndStops(self, labels)
-- Function that detects starts and stop of event (or groups of labels 1).
+- Function that detects starts and stop of event (or groups of labels 1) and returns them in form [start, stop].
 
 > calc_TPAndFP
-- For a pair of ref and hyp event decides if it is false or true prediction.
+- For a pair of ref and hyp event decides if it is false or true prediction. 
+-   It returns: 
+    - tp - percentage of overlap if true event
+    - fp - if this predicted event contributes to FP before (-1), after (1), or on both sides (2) of true event
+    - fp_bef and fp_aft - lengths of FP (if exists) before and after true event (as multiplier of maxLenFP)   
 
 > performance_events
-- Function that detects events in a stream of true labels and predictions. Detects overlaps and measures sensitivity, precision , F1 score and number of false positives. 
+- Function that detects events in a stream of true labels and predictions.
+- Detects overlaps and returns [sensitivity, precision , F1 score and number of false positives/day].  
 
 > performance_duration
 - Calculates performance metrics on the  sample by sample basis.
+- Returns [sensitivity, precision and F1 score].
 
 > performance_all9
 - Function that returns 9 different performance measures of prediction on epilepsy
@@ -87,33 +95,43 @@ Functions defined in *EventsAndDurationPerformances* class are:
 - Also returns postprocessed (smoothed) labels. 
 
 > plotInterp_PredAndConf
-- Function that plots in time true labels, raw predictions as well as postprocessed predictions
+- Function that plots in time true labels, raw predictions as well as postprocessed predictions.
 
 ## Example of usage
 
 ```
 # defining various parameters for postprocessing and performance measuring
 class PerfParams:
+    #parameters for scoring performance
     samplFreq = 1 #in Hz, e.g. 1 sample=1sec
     toleranceFP_befEvent = 1 #in sec
     toleranceFP_aftEvent = 2 #in sec
-    eventStableLenToTest = 5 #in sec
-    eventStablePercToTest = 0.5
+    percOverlapNeeded= 0 #in percentage of true event
+    maxLenFP= 1.5*1000000# in sec
+    #parameters for postprocessing
+    movingWinLen = 5 #in sec
+    movingWinPercentage = 0.5
     distanceBetween2events = 3 #in sec
     bayesProbThresh =1.5 #bayes probability threshold (probably has to be tuned)
 perfMetrics = EventsAndDurationPerformances(PerfParams)
 
 # example of labels and predicsitons
-trueLabels=np.array([0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
-predictions=np.array([0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0])
-predProbab=np.array([0.9,0.8,0.7,0.8,0.7,0.8,0.9,0.8,0.7,0.8,0.6,0.5,0.6,0.7,0.8,0.9,0.9,0.9,0.6,0.7,0.8,0.8,0.8])
+# with maxLenTP= inf
+# with percOverlapNeeded=0 -  totalTP=2, totalFP=4, totalFN=1
+# with percOverlapNeeded=0.5 -  totalTP=1, totalFP=4, totalFN=2
+trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+predictions=np.array([0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0])
+predProbab=np.ones(len(predictions))
 
+# MEASURING PERFORMANCE
 # all 9 performance metrics - on raw predictions, without postprocessing
 performancesNoSmooth= perfMetrics.performance_all9(predictions, trueLabels)
 
+# POSTPROCESSING 
 # performance after 2 types of postprocessing (moving average and bayes smoothing)
 (performanceMetrics, smoothedPredictions) = perfMetrics.calculatePerformanceAfterVariousSmoothing(predictions, trueLabels,predProbab)
 
 # visualizing postprocessed labels 
+allPredictSmoothing=np.vstack((trueLabels, predictions, smoothedPredictions['MovAvrg'], smoothedPredictions['MovAvrg&Merge'], smoothedPredictions['Bayes'], smoothedPredictions['Bayes&Merge']))
 perfMetrics.plotInterp_PredAndConf(trueLabels,predictions, predProbab, smoothedPredictions, 'PredictionVisualization')
 ```
