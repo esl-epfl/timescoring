@@ -52,14 +52,14 @@ class TestAnnotation(unittest.TestCase):
         checkMaskEvents(mask, events, fs, numSamples, 'event at start and end')
         
 
-class TestEpochScoring(unittest.TestCase):
-    def test_epoch_scoring(self): 
+class TestWindowScoring(unittest.TestCase):
+    def test_Window_scoring(self): 
         fs = 10
         
         # Simple events
         ref = Annotation([1,1,1,0,0,0,1,1,1,0], fs)
         hyp = Annotation([0,1,1,0,1,1,0,0,1,0], fs)
-        scores = scoring.EpochScoring(ref, hyp)
+        scores = scoring.WindowScoring(ref, hyp)
         np.testing.assert_equal(scores.sensitivity, 3/6, 'sensitivity simple test')
         np.testing.assert_equal(scores.precision, 3/5, 'precision simple test') 
         np.testing.assert_equal(scores.fpRate, 2*3600*24, 'FP/day simple test')
@@ -67,7 +67,7 @@ class TestEpochScoring(unittest.TestCase):
         # No detections
         ref = Annotation([1,1,1,0,0,0,1,1,1,0], fs)
         hyp = Annotation([0,0,0,0,0,0,0,0,0,0], fs)
-        scores = scoring.EpochScoring(ref, hyp)
+        scores = scoring.WindowScoring(ref, hyp)
         np.testing.assert_equal(scores.sensitivity, 0, 'sensitivity no detections')
         np.testing.assert_equal(scores.precision, np.nan, 'precision no detections') 
         np.testing.assert_equal(scores.fpRate, 0, 'FP/day no detections')
@@ -75,7 +75,7 @@ class TestEpochScoring(unittest.TestCase):
         # No events
         ref = Annotation([0,0,0,0,0,0,0,0,0,0], fs)
         hyp = Annotation([0,1,1,0,1,1,0,0,1,0], fs)
-        scores = scoring.EpochScoring(ref, hyp)
+        scores = scoring.WindowScoring(ref, hyp)
         np.testing.assert_equal(scores.sensitivity, np.nan, 'sensitivity no events')
         np.testing.assert_equal(scores.precision, 0, 'precision no events') 
         np.testing.assert_equal(scores.fpRate, 5*3600*24, 'FP/day no events')
