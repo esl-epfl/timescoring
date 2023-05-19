@@ -70,20 +70,25 @@ class WindowScoring(_Scoring):
 class EventScoring(_Scoring):
     """Calculates performance metrics on an event basis"""
     class Parameters:
-        """Parameters for event scoring
+        """Parameters for event scoring"""
         
-        Args:
-            toleranceSzOnset (float): 1  # [seconds]
-            toleranceSzEnd (float): 10  # [seconds]
-            minOverlap (float): 0.66  # [relative]
-            maxEventDuration (float): 5*60  # [seconds]
-        """
-        
-        toleranceSzOnset : float = 1  # [seconds]
-        toleranceSzEnd : float = 10  # [seconds]
-        minOverlap : float = 0.66  # [relative]
-        maxEventDuration : float = 5*60  # [seconds]
-        
+        def __init__(self, toleranceSzOnset : float = 1,
+                     toleranceSzEnd : float = 10,
+                     minOverlap : float = 0.66,
+                     maxEventDuration : float = 5*60):
+            """Parameters for event scoring
+
+            Args:
+                toleranceSzOnset (float): 1  # [seconds]
+                toleranceSzEnd (float): 10  # [seconds]
+                minOverlap (float): 0.66  # [relative]
+                maxEventDuration (float): 5*60  # [seconds]
+            """   
+            self.toleranceSzOnset = toleranceSzOnset
+            self.toleranceSzEnd = toleranceSzEnd
+            self.minOverlap = minOverlap
+            self.maxEventDuration = maxEventDuration      
+
     
     def __init__(self, ref : Annotation, hyp : Annotation, param : Parameters = Parameters()):
         """Computes a scoring on an event basis.
