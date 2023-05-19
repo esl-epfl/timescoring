@@ -49,7 +49,12 @@ class EventsAndDurationPerformances ():
 		return (events)
 	
 	def calc_TPAndFP(self, ref, hyp):
-		''' For a pair of ref and hyp event decides if it is false or true prediction '''
+		''' For a pair of ref and hyp event decides if it is false or true prediction
+		returns:
+		- TP - percentage of overlap that ref had with hyp
+		- FP - if hyp also caused false positive aroung ref (-1 if only before, 1 if only after and 2 if on both sides)
+		- FP_bef - length of FP before ref (as multiplier of maxLenFP)
+		- FP_aft - length of FP after ref (as multiplier of maxLenFP) '''
 
 		## collect start and stop times from input arg events
 		start_ref = ref[0]
@@ -65,14 +70,20 @@ class EventsAndDurationPerformances ():
 		#     ref:            |        <--------------------->
 		#     hyp:     ---------->
 		if (start_hyp <= start_ref and stop_hyp > start_ref - self.toleranceFP_bef):  # + tolerance
-			len_ovlp= stop_hyp-start_ref
+			if (stop_hyp> stop_ref):
+				len_ovlp = len_ref
+			else: #if stop_hyp <stop_ref
+				len_ovlp= stop_hyp-start_ref
 			# if (len_ovlp >0 and len_ovlp/len_ref> self.percOverlapNeeded):
 			# 	tp = 1
 
 		#     ref:              <--------------------->       |
 		#     hyp:                                        <----------------
 		elif (start_hyp < stop_ref + self.toleranceFP_aft and stop_hyp >= stop_ref):  # - tolerance
-			len_ovlp= stop_ref-start_hyp
+			if (start_hyp <start_ref):
+				len_ovlp=len_ref
+			else: #if start_hyp>start_ref
+				len_ovlp= stop_ref-start_hyp
 			# if (len_ovlp >0 and len_ovlp/len_ref> self.percOverlapNeeded):
 			# 	tp = 1
 		#     ref:              <--------------------->
@@ -93,12 +104,20 @@ class EventsAndDurationPerformances ():
 		#     hyp:     <----------------
 		if (start_hyp < start_ref - self.toleranceFP_bef):
 			fp = fp + 1
-			fp_bef = 1
+			# fp_bef = 1
+			if (stop_hyp <start_ref - self.toleranceFP_bef): #if also finished before this event started
+				fp_bef= np.ceil((stop_hyp - start_hyp)/ self.maxLenFP)
+			else:
+				fp_bef= np.ceil((start_ref- self.toleranceFP_bef - start_hyp)/ self.maxLenFP)
 		#     ref:         |     <--------------------->     |
 		#     hyp:    						  ------------------>
 		if (stop_hyp > stop_ref + self.toleranceFP_aft):
 			fp = fp + 1
-			fp_aft = 1
+			# fp_aft = 1
+			if (start_hyp > stop_ref + self.toleranceFP_aft): #if also started after current event
+				fp_aft = np.ceil((stop_hyp - start_hyp) / self.maxLenFP)
+			else:
+				fp_aft = np.ceil((stop_hyp - (stop_ref + self.toleranceFP_aft)) / self.maxLenFP)
 		return (tp, fp, fp_bef, fp_aft)
 		
 	#
@@ -303,13 +322,19 @@ class EventsAndDurationPerformances ():
 		## TRANSFORMING  BINARY LABELS TO EVENTS
 		predEvents = self.calculateStartsAndStops(predLab)
 		trueEvents = self.calculateStartsAndStops(trueLab)
+		lenPredEvents =np.zeros(len(predEvents))
+		for pI in range(len(predEvents)):
+			lenPredEvents[pI]=predEvents[pI][1]- predEvents[pI][0]
 
 		#################################
 		## MATCHING EVENTS
 		# create flags for each event if it has been used
-		flag_predEvents = np.zeros(len(predEvents))
-		flag_trueEvents = np.zeros(len(trueEvents))
-		flag_predEventsFPAround = np.zeros(len(predEvents))
+		flag_predEvents = np.zeros(len(predEvents)) #keeps track of how many true seizures are covered with this predEvent
+		flag_trueEvents = np.zeros(len(trueEvents)) #keeps track of total predicted overlap for this seizure
+		flag_predEventsFPAround = np.zeros(len(predEvents)) #for every predEvent keeps track if FP are around (-1 only on left side, 1 only on right, 2 on both sides)
+		flag_predEventsFPbefore =np.zeros(len(predEvents)) #for every predEvent keeps track of how much (in maxFPLen) FP is before true seizure
+		flag_predEventsFPafter = np.zeros(len(predEvents)) #for every predEvent keeps track of how much (in maxFPLen) FP is after true seizure
+		flag_predEventsFPbetween = np.zeros(len(predEvents)) #for every predEvent keeps track of how much (in maxFPLen) FP he contributing between two trueEvents
 		# goes through ref events
 		if (len(trueEvents) == 0):
 			totalFP = len(predEvents)
@@ -324,16 +349,35 @@ class EventsAndDurationPerformances ():
 						flag_trueEvents[etIndx] =flag_trueEvents[etIndx]  + tp0 #summing up percentages of overlap
 						flag_predEvents[epIndx] = flag_predEvents[epIndx]+ 1 #still matched (even if not enough percentage overlap, because we dont want to count it as FP)
 
-						if (flag_predEvents[epIndx]>1): #already had FP before for the same matched predicted event
-							if (flag_predEventsFPAround[epIndx]==-1 and fp_aft==1):
-								flag_predEventsFPAround[epIndx]==2 #mark that it has FP on both sides
-						else:
+						if (flag_predEvents[epIndx]>1): #this predicted event was alredy matched to some true event (things inbetween have to be put as seizure)
+							#it had FP before previous true event and now we have FP after
+							if ((flag_predEventsFPAround[epIndx] ==-1 or flag_predEventsFPAround[epIndx]==2 ) and fp_aft>0):
+								flag_predEventsFPAround[epIndx] = 2 #mark that it has FP on both sides
+								flag_predEventsFPafter[epIndx] = fp_aft #update amount of FP after for this predEvent
+							else: #only after was FP
+								flag_predEventsFPAround[epIndx] = 1
+								flag_predEventsFPafter[epIndx] = fp_aft #update amount of FP after for this predEvent
+							# add number of FP inbetween for this predEvent
+							FPbetween= (trueEvents[etIndx][0] - self.toleranceFP_bef)- (trueEvents[etIndx-1][1]+self.toleranceFP_aft)
+							FPbetweenThr=0
+							if( FPbetween>0):
+								FPbetweenThr=np.ceil( FPbetween /self.maxLenFP)
+							flag_predEventsFPbetween[epIndx]=flag_predEventsFPbetween[epIndx]+ FPbetweenThr
+						else: #it is first time this event is matched (update amount of FP around)
 							if (fp0 == 2):
 								flag_predEventsFPAround[epIndx] = 2
-							else:
-								flag_predEventsFPAround[epIndx] = fp_aft - fp_bef  # 1 if was after, or -1 if was before
+								flag_predEventsFPbefore[epIndx] = fp_bef
+								flag_predEventsFPafter[epIndx] = fp_aft
+							elif (fp_bef>0):
+								flag_predEventsFPAround[epIndx] =-1 # 1 if was after, or -1 if was before
+								flag_predEventsFPbefore[epIndx] = fp_bef
+							elif (fp_aft>0):
+								flag_predEventsFPAround[epIndx] = 1
+								flag_predEventsFPafter[epIndx] = fp_aft
 
 					# if no overlap, we will count it later as FP
+
+
 
 		#################################
 		## COUNTING EVENTS - TOTAL NUMBER OF TP, FP, FN etc
@@ -345,11 +389,15 @@ class EventsAndDurationPerformances ():
 		flag_trueEventsThr[np.where(flag_trueEvents>self.percOverlapNeeded)[0]]=1
 		totalTP= sum(flag_trueEventsThr) #count how many true events was labeled as matched
 		# count FP
-		numNonMatchedPredictedEvents= len(np.where(flag_predEvents==0)[0])
-		numFParoundMatched=np.sum(np.abs(flag_predEventsFPAround))
+		# numNonMatchedPredictedEvents= len(np.where(flag_predEvents==0)[0]) #this was before where we didnt care about maxFPlen
+		numNonMatchedPredictedEvents = np.sum( lenPredEvents[np.where(flag_predEvents==0)[0]])  #sum durations of nonmatched
 
-		helper=flag_predEvents - np.ones(len(flag_predEvents))
-		numFPbetweenLongPredEvents=np.sum( helper[np.where(helper>0)])
+		# numFParoundMatched=np.sum(np.abs(flag_predEventsFPAround)) #this was before where we didnt care about maxFPlen
+		numFParoundMatched = np.sum(flag_predEventsFPafter)+ np.sum(flag_predEventsFPbefore)
+
+		# helper=flag_predEvents - np.ones(len(flag_predEvents)) #this was before where we didnt care about maxFPlen
+		# numFPbetweenLongPredEvents=np.sum( helper[np.where(helper>0)]) #this was before where we didnt care about maxFPlen
+		numFPbetweenLongPredEvents = np.sum(flag_predEventsFPbetween)
 		totalFP=numNonMatchedPredictedEvents+numFParoundMatched+numFPbetweenLongPredEvents
 
 		numMissedEvent = numTrueEvent - totalTP
