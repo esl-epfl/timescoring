@@ -24,7 +24,6 @@ class _Scoring:
     f1 : float
     fpRate : float
     
-    
     def computeScores(self):
         """ Compute performance metrics."""
         # Sensitivity
@@ -116,7 +115,7 @@ class EventScoring(_Scoring):
         # Count True detections
         self.tp = 0
         for event in ref.events:
-            if np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/(event[1]-event[0]) > param.minOverlap:
+            if (np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
                 self.tp +=1
                 
         # Count False detections
