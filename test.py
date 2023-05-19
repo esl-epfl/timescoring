@@ -138,7 +138,7 @@ class TestEventScoring(unittest.TestCase):
         # HYP    <------->
         ref = Annotation([(40, 60)], fs, numSamples)
         hyp = Annotation([(39, 60)], fs, numSamples)
-        param = scoring.EventScoring.Parameters(toleranceSzOnset = 1)
+        param = scoring.EventScoring.Parameters(toleranceStart = 1)
         scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity no detections')
         np.testing.assert_equal(scores.precision, 1, 'precision no detections') 
@@ -171,7 +171,58 @@ class TestEventScoring(unittest.TestCase):
         np.testing.assert_equal(scores.sensitivity, np.nan, 'sensitivity no events')
         np.testing.assert_equal(scores.precision, 0, 'precision no events') 
         np.testing.assert_equal(scores.fpRate, 1*24, 'FP/day no events')
+        
+        
+        # Seizure with typical distribution, some overlapping some not
+        ref = Annotation([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                          0,0,1,1,1,1,1,1,1,0,0,0, 0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                         fs)
+        hyp = Annotation([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,
+                          1,1,1,1,1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
+                         fs)
+        param = scoring.EventScoring.Parameters(
+            toleranceStart=0,
+            toleranceEnd=0,   
+            minOverlap=0,
+            maxEventDuration=5*60)
+        scores = scoring.EventScoring(ref, hyp, param)
+        np.testing.assert_equal(scores.sensitivity, 2/3, 'sensitivity typical distribution')
+        np.testing.assert_equal(scores.precision, 0.4, 'precision typical distribution') 
+        
+        param.minOverlap = 0.5
+        scores = scoring.EventScoring(ref, hyp, param)
+        np.testing.assert_equal(scores.sensitivity, 1/3, 'sensitivity typical distribution')
+        np.testing.assert_equal(scores.precision, 1/4, 'precision typical distribution')
+        
+        
+        # Long hypothesis seizure spaning several true seizures
+        message = 'Long predicted seizure spaning several true seizures'
+        ref = Annotation([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,0,0,
+                          0,0,1,1,1,1,1,1,1,0,0,0, 0,0,1,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                         fs)
+        hyp = Annotation([0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,
+                          0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                         fs)
+        
+        param.minOverlap = 0.0
+        scores = scoring.EventScoring(ref, hyp, param)
+        np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity : ' + message)
+        np.testing.assert_equal(scores.precision, 5/7, 'precision : ' + message)
 
+
+        # Long true seizure and many short predicted seizures​
+        message = 'Long true seizure and many short predicted seizures​'
+        ref = Annotation([0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                          1,1,1,1,1,1,1,1,1,0,0,0, 0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                         fs)
+        hyp = Annotation([0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,
+                          0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0],
+                         fs)
+        
+        param.minOverlap = 0.0
+        scores = scoring.EventScoring(ref, hyp, param)
+        np.testing.assert_equal(scores.sensitivity, 0.5, 'sensitivity : ' + message)
+        np.testing.assert_equal(scores.precision, 0.25, 'precision : ' + message)
 
 if __name__ == '__main__':
     unittest.main()
