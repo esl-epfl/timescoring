@@ -223,6 +223,21 @@ class TestEventScoring(unittest.TestCase):
         scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 0.5, 'sensitivity : ' + message)
         np.testing.assert_equal(scores.precision, 0.25, 'precision : ' + message)
+        
+        # Typial distribution (one missed extended REF would hide FP)
+        fs = 1
+        ref = Annotation([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                            0,0,1,1,1,1,1,1,1,0,0,0, 0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,
+                            0,0,0,0,0,0,0,0,0,0,0,0,0],
+                            fs)
+        hyp = Annotation([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,
+                            1,1,1,1,1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,
+                            0,0,0,0,0,0,0,0,0,1,1,1,1],
+                            fs)
+        message = 'typical - extended REF would hide FP'
+        scores = scoring.EventScoring(ref, hyp)
+        np.testing.assert_equal(scores.sensitivity, 1/3, 'sensitivity : ' + message)
+        np.testing.assert_equal(scores.precision, 0.25, 'precision : ' + message)
 
 if __name__ == '__main__':
     unittest.main()
