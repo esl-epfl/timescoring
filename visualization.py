@@ -69,6 +69,75 @@ def plotWindowScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
     return fig
 
 
+def plotEventScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
+    """Build an overview plot showing the outcome of event scoring.
+
+    Args:
+        ref (Annotation): Reference annotations (ground-truth)
+        hyp (Annotation): Hypotheses annotations (output of a ML pipeline)
+
+    Returns:
+        plt.figure: Output matplotlib figure
+    """
+    param = scoring.EventScoring.Parameters()
+    score = scoring.EventScoring(ref, hyp, param)
+    time = np.arange(len(ref.mask)) / ref.fs
+
+
+
+    fig = plt.figure(figsize=(16, 3))
+    
+    # Plot Labels
+    plt.plot(ref.mask*0.4 + 0.6, 'k')
+    plt.plot(hyp.mask*0.4 + 0.1, 'k')
+    
+    # Plot TP & FN
+    detectionMask = np.zeros_like(ref.mask)
+    for event in ref.events:
+        # TP
+        if (np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
+            color = 'tab:green'
+            plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
+            lineTp, = plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5)
+            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color=color, linewidth=5, zorder=10)
+            detectionMask[int(event[0]*ref.fs):int(event[1]*ref.fs)] = 1
+        else:
+            color = 'tab:purple'
+            plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
+            lineFn, = plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5)
+    
+    # Plot FP 
+    extendedDetections = scoring.EventScoring._extendEvents(Annotation(detectionMask, ref.fs), param.toleranceStart, param.toleranceEnd)
+    for event in hyp.events:
+        if np.any(~extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
+            color='tab:red'
+            plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
+            lineFp, = plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color=color, linewidth=5, zorder=9)
+
+    # Text  
+    plt.title('Event Scoring')
+
+    plt.yticks([0.3, 0.8], ['HYP', 'REF'])
+    plt.xlabel('time [s]')
+    
+    plt.legend([lineTp, lineFn, lineFp],
+               ['TP : {}'.format(np.sum(score.tp)), 
+                'FN : {}'.format(np.sum(score.refTrue - score.tp)),
+                'FP : {}'.format(np.sum(score.fp))], loc=(1.02, 0.65))
+    
+    textstr = "• Sensitivity : {:.2f}\n".format(score.sensitivity)
+    textstr+= "• Precision   : {:.2f}\n".format(score.precision)
+    textstr+= "• F1-score    : {:.2f}".format(score.f1)
+    fig.text(1.02, 0.05, textstr, fontsize=12, transform=plt.gca().transAxes)
+    
+    # Adjust spacing
+    plt.margins(x=0)  # No margin on X data
+    plt.tight_layout()
+    fig.subplots_adjust(right=0.86)  # Allow space for scoring text
+        
+    return fig
+
+
 if __name__ == "__main__":
     fs = 1
     ref = Annotation([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -80,5 +149,6 @@ if __name__ == "__main__":
                         0,0,0,0,0,0,0,0,0,1,1,1,1],
                         fs)
 
-    fig = plotWindowScoring(ref, hyp)
+    #fig = plotWindowScoring(ref, hyp)
+    fig = plotEventScoring(ref, hyp)
     plt.show()
