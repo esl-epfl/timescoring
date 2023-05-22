@@ -13,8 +13,8 @@ class PerfParams:
     samplFreq = 1 #in Hz, e.g. 1 sample=1sec
     toleranceFP_befEvent = 1 #in sec
     toleranceFP_aftEvent = 2 #in sec
-    percOverlapNeeded= 0 #in percentage of true event
-    maxLenFP= 1.5*1000000# in sec
+    percOverlapNeeded= 0.5 #in percentage of true event e.g. 0 or 0.5
+    maxLenFP= 1.5# in sec e.g. 1.5 or 1000 (instad of inf)
 
     #parameters for postprocessing
     movingWinLen = 5 #in sec
@@ -27,14 +27,14 @@ perfMetrics = EventsAndDurationPerformances(PerfParams)
 
 ############################################################################################
 ############################################################################################
-## DIFFERENT TEST EXAMPLES
-# TODO: add expected outcome in terms of performance metrics for each
-# no true labels - example 1
-# with maxLenTP= inf  - totalTP=0, totalFP=4, totalFN=0
-# with maxLenTP= 1.5  -  totalTP=0, totalFP=29, totalFN=0
-trueLabels=np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-predictions=np.array([0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0])
-predProbab=np.ones(len(predictions))
+# ## DIFFERENT TEST EXAMPLES
+# # TODO: add expected outcome in terms of performance metrics for each
+# # no true labels - example 1
+# # with maxLenTP= inf  - totalTP=0, totalFP=4, totalFN=0
+# # with maxLenTP= 1.5  -  totalTP=0, totalFP=29, totalFN=0
+# trueLabels=np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+# predictions=np.array([0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0])
+# predProbab=np.ones(len(predictions))
 
 # # seizures with typical distribution, some overlaping some not - example 2
 # with maxLenTP= inf
@@ -60,23 +60,23 @@ predProbab=np.ones(len(predictions))
 # predictions=np.array([0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0])
 # predProbab=np.ones(len(predictions))
 
-# # combination of everything  - example 5
-# with maxLenTP= inf
-# with percOverlapNeeded=0 -  totalTP=2, totalFP=4, totalFN=1
-# with percOverlapNeeded=0.5 -  totalTP=1, totalFP=4, totalFN=2
+# # # combination of everything  - example 5
+# # with maxLenTP= inf
+# # with percOverlapNeeded=0 -  totalTP=2, totalFP=4, totalFN=1
+# # with percOverlapNeeded=0.5 -  totalTP=1, totalFP=4, totalFN=2
 # trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 # predictions=np.array([0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0])
 # predProbab=np.ones(len(predictions))
 
-# # # testing very long FP - example 6
-# # with maxLenTP=1.5
-# # with percOverlapNeeded=0 -  totalTP=2, totalFP=8, totalFN=1
-# # with percOverlapNeeded=0.5 -  totalTP=1, totalFP=8, totalFN=2
-# # with maxLenTP= inf
-# # with percOverlapNeeded=0 -  totalTP=2, totalFP=3, totalFN=1
-# trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,])
-# predictions=np.array([0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0])
-# predProbab=np.ones(len(predictions))
+# # testing very long FP - example 6
+# with maxLenTP=1.5
+# with percOverlapNeeded=0 -  totalTP=2, totalFP=8, totalFN=1
+# with percOverlapNeeded=0.5 -  totalTP=1, totalFP=8, totalFN=2
+# with maxLenTP= inf
+# with percOverlapNeeded=0 -  totalTP=2, totalFP=3, totalFN=1
+trueLabels=np.array([0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,])
+predictions=np.array([0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0])
+predProbab=np.ones(len(predictions))
 
 # #
 # #simple example with different probabilities of labels

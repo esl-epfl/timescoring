@@ -324,7 +324,7 @@ class EventsAndDurationPerformances ():
 		trueEvents = self.calculateStartsAndStops(trueLab)
 		lenPredEvents =np.zeros(len(predEvents))
 		for pI in range(len(predEvents)):
-			lenPredEvents[pI]=predEvents[pI][1]- predEvents[pI][0]
+			lenPredEvents[pI]=np.ceil((predEvents[pI][1]- predEvents[pI][0])/ self.maxLenFP)
 
 		#################################
 		## MATCHING EVENTS
