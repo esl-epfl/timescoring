@@ -118,15 +118,17 @@ class EventScoring(_Scoring):
         
         # Count True detections
         self.tp = 0
+        detectionMask = np.zeros_like(ref.mask)
         for event in ref.events:
             if (np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
                 self.tp +=1
+                detectionMask[int(event[0]*ref.fs):int(event[1]*ref.fs)] = 1
                 
         # Count False detections
         self.fp = 0
-        extendedRef = EventScoring._extendEvents(ref, param.toleranceStart, param.toleranceEnd)
+        extendedDetections = EventScoring._extendEvents(Annotation(detectionMask, ref.fs), param.toleranceStart, param.toleranceEnd)
         for event in hyp.events:
-            if np.any(~extendedRef.mask[int(event[0]*extendedRef.fs):int(event[1]*extendedRef.fs)]):
+            if np.any(~extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
                 self.fp +=1
         
         self.computeScores()
