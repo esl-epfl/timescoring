@@ -43,6 +43,7 @@ def plotWindowScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
     # Plot Colored dots for detections
     lineFn, = plt.plot(time[fn], fn[fn], 'o', color='tab:purple')
     lineTp, = plt.plot(time[tp], tp[tp], 'o', color='tab:green')
+    plt.plot(time[tp], tp[tp]*0.5, 'o', color='tab:green')
     lineFp, = plt.plot(time[fp], fp[fp]*0.5, 'o', color='tab:red')
         
     # Text  
@@ -149,6 +150,6 @@ if __name__ == "__main__":
                         0,0,0,0,0,0,0,0,0,1,1,1,1],
                         fs)
 
-    #fig = plotWindowScoring(ref, hyp)
+    fig = plotWindowScoring(ref, hyp)
     fig = plotEventScoring(ref, hyp)
     plt.show()
