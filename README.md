@@ -15,9 +15,11 @@ In more details, we measures performance on the level of:
 - Windows (or sample-by-sample) : Performance metric that threats every label sample independently.
 - Events (e.g. epileptic seizure) : Classifies each event in both reference and hypothesis based on overlap of both.
 
-In picture below are illustrate several use cases, how errors are counted, and what is the final performance measure.
+Both methods are illustrated in the following figures :
 
-![Illustration of duration and episode-based performance metrics.](PerformanceMetricsIllustration.png)
+![Illustration of window based scoring.](https://user-images.githubusercontent.com/747240/239865493-1f1e602d-d60f-4c95-9928-3c4f4d6a477c.png)
+![Illustration of event based scoring.](https://user-images.githubusercontent.com/747240/239865503-adf85e10-5840-40d4-a823-ac473cce8f73.png)
+
 
 ## Code
 
@@ -28,6 +30,8 @@ The library provides three classes :
 - `annotation.Annotation` : store annotations
 - `scoring.WindowScoring(ref, hyp)` : Compute window based scoring
 - `scoring.EventScoring(ref, hyp)` : Compute event based scoring
+
+In addition it also provides functions to visualize the output of the scoring algorithm (see `visualization.py`).
 
 ### Parameters
 
