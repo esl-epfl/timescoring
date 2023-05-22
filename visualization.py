@@ -104,12 +104,12 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
         if (np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
             color = 'tab:green'
             plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
-            plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5)
+            plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5, solid_capstyle='butt')
             detectionMask[int(event[0]*ref.fs):int(event[1]*ref.fs)] = 1
         else:
             color = 'tab:purple'
             plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
-            plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5)
+            plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5, solid_capstyle='butt')
     
     # Plot FP 
     extendedDetections = scoring.EventScoring._extendEvents(Annotation(detectionMask, ref.fs), param.toleranceStart, param.toleranceEnd)
@@ -118,14 +118,14 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
         if np.any(~extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
             color='tab:red'
             plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
-            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color=color, linewidth=5)
+            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color=color, linewidth=5, solid_capstyle='butt')
             fpFlag = True
         if np.any(extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
             if fpFlag :
                 lineStyle = (0, (2, 2))
             else:
                 lineStyle = 'solid'
-            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color='tab:green', linewidth=5, linestyle=lineStyle)
+            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color='tab:green', linewidth=5, solid_capstyle='butt', linestyle=lineStyle)
 
     # Text  
     plt.title('Event Scoring')
