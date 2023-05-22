@@ -70,27 +70,32 @@ def plotWindowScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
     return fig
 
 
-def plotEventScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
+def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventScoring.Parameters = scoring.EventScoring.Parameters()) -> plt.figure:
     """Build an overview plot showing the outcome of event scoring.
 
     Args:
         ref (Annotation): Reference annotations (ground-truth)
         hyp (Annotation): Hypotheses annotations (output of a ML pipeline)
+        param(EventScoring.Parameters, optional):  Parameters for event scoring.
+            Defaults to default values.
 
     Returns:
         plt.figure: Output matplotlib figure
     """
-    param = scoring.EventScoring.Parameters()
+    ref = scoring.EventScoring._splitLongEvents(ref, param.maxEventDuration)
+    hyp = scoring.EventScoring._splitLongEvents(hyp, param.maxEventDuration)
     score = scoring.EventScoring(ref, hyp, param)
-    time = np.arange(len(ref.mask)) / ref.fs
-
-
 
     fig = plt.figure(figsize=(16, 3))
     
     # Plot Labels
     plt.plot(ref.mask*0.4 + 0.6, 'k')
     plt.plot(hyp.mask*0.4 + 0.1, 'k')
+    
+    # Initialize lines for legend
+    lineTp, = plt.plot([], [], color='tab:green', linewidth=5)
+    lineFn, = plt.plot([], [], color='tab:purple', linewidth=5)
+    lineFp, = plt.plot([], [], color='tab:red', linewidth=5)
     
     # Plot TP & FN
     detectionMask = np.zeros_like(ref.mask)
@@ -99,21 +104,28 @@ def plotEventScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
         if (np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
             color = 'tab:green'
             plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
-            lineTp, = plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5)
-            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color=color, linewidth=5, zorder=10)
+            plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5)
             detectionMask[int(event[0]*ref.fs):int(event[1]*ref.fs)] = 1
         else:
             color = 'tab:purple'
             plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
-            lineFn, = plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5)
+            plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5)
     
     # Plot FP 
     extendedDetections = scoring.EventScoring._extendEvents(Annotation(detectionMask, ref.fs), param.toleranceStart, param.toleranceEnd)
     for event in hyp.events:
+        fpFlag = False
         if np.any(~extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
             color='tab:red'
             plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
-            lineFp, = plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color=color, linewidth=5, zorder=9)
+            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color=color, linewidth=5)
+            fpFlag = True
+        if np.any(extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
+            if fpFlag :
+                lineStyle = (0, (2, 2))
+            else:
+                lineStyle = 'solid'
+            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color='tab:green', linewidth=5, linestyle=lineStyle)
 
     # Text  
     plt.title('Event Scoring')
