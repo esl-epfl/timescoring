@@ -85,12 +85,13 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
     ref = scoring.EventScoring._splitLongEvents(ref, param.maxEventDuration)
     hyp = scoring.EventScoring._splitLongEvents(hyp, param.maxEventDuration)
     score = scoring.EventScoring(ref, hyp, param)
+    time = np.arange(len(ref.mask)) / ref.fs
 
     fig = plt.figure(figsize=(16, 3))
     
     # Plot Labels
-    plt.plot(ref.mask*0.4 + 0.6, 'k')
-    plt.plot(hyp.mask*0.4 + 0.1, 'k')
+    plt.plot(time, ref.mask*0.4 + 0.6, 'k')
+    plt.plot(time, hyp.mask*0.4 + 0.1, 'k')
     
     # Initialize lines for legend
     lineTp, = plt.plot([], [], color='tab:green', linewidth=5)
@@ -103,13 +104,13 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
         # TP
         if (np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
             color = 'tab:green'
-            plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
-            plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5, solid_capstyle='butt')
+            plt.axvspan(event[0], event[1]-(1/hyp.fs), alpha=0.2, color=color)
+            plt.plot([event[0], event[1]-(1/hyp.fs)], [1, 1], color=color, linewidth=5, solid_capstyle='butt')
             detectionMask[int(event[0]*ref.fs):int(event[1]*ref.fs)] = 1
         else:
             color = 'tab:purple'
-            plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
-            plt.plot([event[0], event[1]-hyp.fs], [1, 1], color=color, linewidth=5, solid_capstyle='butt')
+            plt.axvspan(event[0], event[1]-(1/hyp.fs), alpha=0.2, color=color)
+            plt.plot([event[0], event[1]-(1/hyp.fs)], [1, 1], color=color, linewidth=5, solid_capstyle='butt')
     
     # Plot FP 
     extendedDetections = scoring.EventScoring._extendEvents(Annotation(detectionMask, ref.fs), param.toleranceStart, param.toleranceEnd)
@@ -117,15 +118,15 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
         fpFlag = False
         if np.any(~extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
             color='tab:red'
-            plt.axvspan(event[0], event[1]-hyp.fs, alpha=0.2, color=color)
-            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color=color, linewidth=5, solid_capstyle='butt')
+            plt.axvspan(event[0], event[1]-(1/hyp.fs), alpha=0.2, color=color)
+            plt.plot([event[0], event[1]-(1/hyp.fs)], [0.5, 0.5], color=color, linewidth=5, solid_capstyle='butt')
             fpFlag = True
         if np.any(extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
             if fpFlag :
                 lineStyle = (0, (2, 2))
             else:
                 lineStyle = 'solid'
-            plt.plot([event[0], event[1]-hyp.fs], [0.5, 0.5], color='tab:green', linewidth=5, solid_capstyle='butt', linestyle=lineStyle)
+            plt.plot([event[0], event[1]-(1/hyp.fs)], [0.5, 0.5], color='tab:green', linewidth=5, solid_capstyle='butt', linestyle=lineStyle)
 
     # Text  
     plt.title('Event Scoring')
