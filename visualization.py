@@ -82,6 +82,14 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
     Returns:
         plt.figure: Output matplotlib figure
     """
+    def _plotEvent(x, y, color):
+            plt.axvspan(x[0], x[1], alpha=0.2, color=color)
+            if x[1] - x[0] > 0:
+                plt.plot(x, y, color=color, linewidth=5, solid_capstyle='butt')
+            else:
+                plt.scatter(x[0], y[0], color=color)
+    
+    
     ref = scoring.EventScoring._splitLongEvents(ref, param.maxEventDuration)
     hyp = scoring.EventScoring._splitLongEvents(hyp, param.maxEventDuration)
     score = scoring.EventScoring(ref, hyp, param)
@@ -103,23 +111,17 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
     for event in ref.events:
         # TP
         if (np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
-            color = 'tab:green'
-            plt.axvspan(event[0], event[1]-(1/hyp.fs), alpha=0.2, color=color)
-            plt.plot([event[0], event[1]-(1/hyp.fs)], [1, 1], color=color, linewidth=5, solid_capstyle='butt')
+            _plotEvent([event[0], event[1]-(1/hyp.fs)], [1, 1], 'tab:green')
             detectionMask[int(event[0]*ref.fs):int(event[1]*ref.fs)] = 1
         else:
-            color = 'tab:purple'
-            plt.axvspan(event[0], event[1]-(1/hyp.fs), alpha=0.2, color=color)
-            plt.plot([event[0], event[1]-(1/hyp.fs)], [1, 1], color=color, linewidth=5, solid_capstyle='butt')
+            _plotEvent([event[0], event[1]-(1/hyp.fs)], [1, 1], 'tab:purple')
     
     # Plot FP 
     extendedDetections = scoring.EventScoring._extendEvents(Annotation(detectionMask, ref.fs), param.toleranceStart, param.toleranceEnd)
     for event in hyp.events:
         fpFlag = False
         if np.any(~extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
-            color='tab:red'
-            plt.axvspan(event[0], event[1]-(1/hyp.fs), alpha=0.2, color=color)
-            plt.plot([event[0], event[1]-(1/hyp.fs)], [0.5, 0.5], color=color, linewidth=5, solid_capstyle='butt')
+            _plotEvent([event[0], event[1]-(1/hyp.fs)], [0.5, 0.5], 'tab:red')
             fpFlag = True
         if np.any(extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
             if fpFlag :
