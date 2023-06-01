@@ -156,7 +156,7 @@ class EventScoring(_Scoring):
     
     
     def _extendEvents(events : Annotation, before : float, after : float) -> Annotation:
-        """_summary_
+        """Extend duration of all events in an Annotation object.
 
         Args:
             events (Annotation): Annotation object containing events to extend
