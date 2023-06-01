@@ -37,8 +37,8 @@ def plotWindowScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
                      transform=plt.gca().get_xaxis_transform())
     
     # Plot Labels
-    plt.plot(ref.mask*0.4 + 0.6, 'k')
-    plt.plot(hyp.mask*0.4 + 0.1, 'k')
+    plt.plot(time, ref.mask*0.4 + 0.6, 'k')
+    plt.plot(time, hyp.mask*0.4 + 0.1, 'k')
     
     # Plot Colored dots for detections
     lineFn, = plt.plot(time[fn], fn[fn], 'o', color='tab:purple')
