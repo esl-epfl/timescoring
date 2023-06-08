@@ -12,12 +12,12 @@ For this reason, here we provide code that measures performance on the level of 
 
 In more details, we measures performance on the level of:
 
-- Windows (or sample-by-sample) : Performance metric that threats every label sample independently.
+- Sample : Performance metric that threats every label sample independently.
 - Events (e.g. epileptic seizure) : Classifies each event in both reference and hypothesis based on overlap of both.
 
 Both methods are illustrated in the following figures :
 
-![Illustration of window based scoring.](https://user-images.githubusercontent.com/747240/239865493-1f1e602d-d60f-4c95-9928-3c4f4d6a477c.png)
+![Illustration of sample based scoring.](https://user-images.githubusercontent.com/747240/239865493-1f1e602d-d60f-4c95-9928-3c4f4d6a477c.png)
 ![Illustration of event based scoring.](https://user-images.githubusercontent.com/747240/239865503-adf85e10-5840-40d4-a823-ac473cce8f73.png)
 
 
@@ -28,12 +28,14 @@ An example usage of the library is provided in `example.ipynb`.
 The library provides three classes :
 
 - `annotation.Annotation` : store annotations
-- `scoring.WindowScoring(ref, hyp)` : Compute window based scoring
+- `scoring.SampleScoring(ref, hyp)` : Compute sample based scoring
 - `scoring.EventScoring(ref, hyp)` : Compute event based scoring
 
 In addition it also provides functions to visualize the output of the scoring algorithm (see `visualization.py`).
 
 ### Parameters
+
+Sample based scoring allows to set the sampling frequency of the labels. It defaults to 1 Hz.
 
 Event based scoring allows to define certain parameters which are provided as an instance of `scoring.EventScoring.Parameters` :
 
@@ -85,7 +87,7 @@ import scoring
 fs = 10
 ref = Annotation([1,1,1,0,0,0,1,1,1,0], fs)
 hyp = Annotation([0,1,1,0,1,1,0,0,1,0], fs)
-scores = scoring.WindowScoring(ref, hyp)
+scores = scoring.SampleScoring(ref, hyp)
 
 # Scores can also be computed per event
 param = scoring.EventScoring.Parameters(

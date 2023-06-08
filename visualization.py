@@ -4,8 +4,8 @@ import numpy as np
 from annotations import Annotation
 import scoring
 
-def plotWindowScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
-    """Build an overview plot showing the outcome of window scoring.
+def plotSampleScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
+    """Build an overview plot showing the outcome of sample scoring.
 
     Args:
         ref (Annotation): Reference annotations (ground-truth)
@@ -15,7 +15,7 @@ def plotWindowScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
         plt.figure: Output matplotlib figure
     """
     
-    score = scoring.WindowScoring(ref, hyp)
+    score = scoring.SampleScoring(ref, hyp)
     time = np.arange(len(ref.mask)) / ref.fs
     
     # Compute event masks
@@ -47,7 +47,7 @@ def plotWindowScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
     lineFp, = plt.plot(time[fp], fp[fp]*0.5, 'o', color='tab:red')
         
     # Text  
-    plt.title('Window Scoring')
+    plt.title('SampleScoring Scoring')
 
     plt.yticks([0.3, 0.8], ['HYP', 'REF'])
     plt.xlabel('time [s]')
@@ -165,6 +165,6 @@ if __name__ == "__main__":
                         0,0,0,0,0,0,0,0,0,1,1,1,1],
                         fs)
 
-    fig = plotWindowScoring(ref, hyp)
+    fig = plotSampleScoring(ref, hyp)
     fig = plotEventScoring(ref, hyp)
     plt.show()
