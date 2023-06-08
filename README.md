@@ -20,7 +20,6 @@ Both methods are illustrated in the following figures :
 ![Illustration of sample based scoring.](https://user-images.githubusercontent.com/747240/239865493-1f1e602d-d60f-4c95-9928-3c4f4d6a477c.png)
 ![Illustration of event based scoring.](https://user-images.githubusercontent.com/747240/239865503-adf85e10-5840-40d4-a823-ac473cce8f73.png)
 
-
 ## Code
 
 An example usage of the library is provided in `example.ipynb`.
@@ -39,9 +38,9 @@ Sample based scoring allows to set the sampling frequency of the labels. It defa
 
 Event based scoring allows to define certain parameters which are provided as an instance of `scoring.EventScoring.Parameters` :
 
-- `toleranceStart` (float): Allow some tolerance on the start of an event without counting a false detection. Defaults to 1  # [seconds].
-- `toleranceEnd` (float): Allow some tolerance on the end of an event without counting a false detection. Defaults to 10  # [seconds].
-- `minOverlap` (float): Minimum relative overlap between ref and hyp for a detection. Defaults to 0.66  # [relative].
+- `toleranceStart` (float): Allow some tolerance on the start of an event without counting a false detection. Defaults to 30  # [seconds].
+- `toleranceEnd` (float): Allow some tolerance on the end of an event without counting a false detection. Defaults to 60  # [seconds].
+- `minOverlap` (float): Minimum relative overlap between ref and hyp for a detection. Defaults to 0 which corresponds to any overlap  # [relative].
 - `maxEventDuration` (float): Automatically split events longer than a given duration. Defaults to 5*60  # [seconds].
 - `minDurationBetweenEvents` (float): Automatically merge events that are separated by less than the given duration. Defaults to 90 # [seconds].
 
@@ -94,8 +93,9 @@ scores = scoring.SampleScoring(ref, hyp)
 param = scoring.EventScoring.Parameters(
     toleranceStart=0,
     toleranceEnd=0,
-    minOverlap=0.66,
-    maxEventDuration=5*60)
+    minOverlap=0,
+    maxEventDuration=5*60,
+    minDurationBetweenEvents=0)
 scores = scoring.EventScoring(ref, hyp, param)
 
 print("# Event scoring\n" +

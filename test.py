@@ -137,7 +137,9 @@ class TestEventScoring(unittest.TestCase):
         # Simple events
         ref = Annotation([(40, 60)], fs, numSamples)
         hyp = Annotation([(10, 20), (42, 65)], fs, numSamples)
-        param = scoring.EventScoring.Parameters(minDurationBetweenEvents = 0)
+        param = scoring.EventScoring.Parameters(toleranceStart = 0, 
+                                                toleranceEnd = 10,
+                                                minDurationBetweenEvents = 0)
         scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity no detections')
         np.testing.assert_equal(scores.precision, 0.5, 'precision no detections') 
