@@ -114,7 +114,17 @@ class TestEventScoring(unittest.TestCase):
         TestAnnotation.assertMask(labels.mask, shortLabels.mask, 
                                   "Event mask changed when splitting events")
         
+
+    def test_merge_neighbouring_events(self):
+        fs = 10
+        labels = Annotation([(1, 2), (2, 3), (3.5, 4), (4, 5), (18, 20)], fs, 600)
+        minDurationBetweenEvents = 0.2
         
+        mergedEvents =  scoring.EventScoring._mergeNeighbouringEvents(labels, minDurationBetweenEvents)
+        expectedMergedEvents = Annotation([(1, 3), (3.5, 5), (18, 20)], fs, 600)
+        TestAnnotation.assertListOfTupleEqual(expectedMergedEvents.events, mergedEvents.events, 'Test merge events')   
+
+
     def test_extending_events(self):
         fs = 1
         numSamples = 10
