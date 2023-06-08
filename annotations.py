@@ -53,7 +53,7 @@ class Annotation:
             # Build binary mask associated with list of events
             mask = np.zeros((numSamples,), dtype=np.bool_)
             for event in data:
-                mask[int(np.round(event[0]*fs)):int(np.round(event[1]*fs))] = True
+                mask[round(event[0]*fs):round(event[1]*fs)] = True
             object.__setattr__(self, 'events', data)  # Write to frozen object
             object.__setattr__(self, 'mask', mask)  # Write to frozen object
         

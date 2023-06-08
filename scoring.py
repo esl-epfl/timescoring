@@ -62,8 +62,8 @@ class SampleScoring(_Scoring):
             fs (int): Sampling frequency of the labels. Default 1 Hz.
         """
         # Resample Data
-        ref = Annotation(ref.events, fs, int(len(ref.mask)/ref.fs*fs))
-        hyp = Annotation(hyp.events, fs, int(len(hyp.mask)/hyp.fs*fs))
+        ref = Annotation(ref.events, fs, round(len(ref.mask)/ref.fs*fs))
+        hyp = Annotation(hyp.events, fs, round(len(hyp.mask)/hyp.fs*fs))
         
         if len(ref.mask) != len(hyp.mask):
             raise ValueError(("The number of samples in the reference Annotation"
@@ -88,8 +88,9 @@ class EventScoring(_Scoring):
         
         def __init__(self, toleranceStart : float = 1,
                      toleranceEnd : float = 10,
-                     minOverlap : float = 0.66,
-                     maxEventDuration : float = 5*60):
+                     minOverlap : float = 1e-6,
+                     maxEventDuration : float = 5*60,
+                     minDurationBetweenEvents : float = 90):
             """Parameters for event scoring
 
             Args:
@@ -98,14 +99,17 @@ class EventScoring(_Scoring):
                 toleranceEnd (float): Allow some tolerance on the end of an event 
                     without counting a false detection. Defaults to 10  # [seconds].
                 minOverlap (float): Minimum relative overlap between ref and hyp for 
-                    a detection. Defaults to 0.66  # [relative].
+                    a detection. Defaults to 1e-6 which corresponds to any overlap  # [relative].
                 maxEventDuration (float): Automatically split events longer than a 
                     given duration. Defaults to 5*60  # [seconds].
+                minDurationBetweenEvents (float): Automatically merge events that are
+                    separated by less than the given duration. Defaults to 90 # [seconds].
             """   
             self.toleranceStart = toleranceStart
             self.toleranceEnd = toleranceEnd
             self.minOverlap = minOverlap
-            self.maxEventDuration = maxEventDuration      
+            self.maxEventDuration = maxEventDuration
+            self.minDurationBetweenEvents = minDurationBetweenEvents
 
     
     def __init__(self, ref : Annotation, hyp : Annotation, param : Parameters = Parameters()):
@@ -117,6 +121,15 @@ class EventScoring(_Scoring):
             param(EventScoring.Parameters, optional):  Parameters for event scoring.
                 Defaults to default values.
         """
+        # Resample data
+        fs = 10  # Operate at a time precision of 10 Hz
+        ref = Annotation(ref.events, fs, round(len(ref.mask)/ref.fs*fs))
+        hyp = Annotation(hyp.events, fs, round(len(hyp.mask)/hyp.fs*fs))
+        
+        # Merge events separated by less than param.minDurationBetweenEvents
+        ref = EventScoring._mergeNeighbouringEvents(ref, param.minDurationBetweenEvents)
+        hyp = EventScoring._mergeNeighbouringEvents(hyp, param.minDurationBetweenEvents)
+        
         # Split long events to param.maxEventDuration
         ref = EventScoring._splitLongEvents(ref, param.maxEventDuration)
         hyp = EventScoring._splitLongEvents(hyp, param.maxEventDuration)
@@ -129,16 +142,17 @@ class EventScoring(_Scoring):
         # Count True detections
         self.tp = 0
         detectionMask = np.zeros_like(ref.mask)
-        for event in ref.events:
-            if (np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
+        extendedRef = EventScoring._extendEvents(ref, param.toleranceStart, param.toleranceEnd)
+        for event in extendedRef.events:
+            if (np.sum(hyp.mask[round(event[0]*hyp.fs):round(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
                 self.tp +=1
-                detectionMask[int(event[0]*ref.fs):int(event[1]*ref.fs)] = 1
+                detectionMask[round(event[0]*ref.fs):round(event[1]*ref.fs)] = 1
                 
         # Count False detections
         self.fp = 0
         extendedDetections = EventScoring._extendEvents(Annotation(detectionMask, ref.fs), param.toleranceStart, param.toleranceEnd)
         for event in hyp.events:
-            if np.any(~extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
+            if np.any(~detectionMask[round(event[0]*ref.fs):round(event[1]*ref.fs)]):
                 self.fp +=1
         
         self.computeScores()
@@ -163,6 +177,31 @@ class EventScoring(_Scoring):
                 shorterEvents.insert(i + 1, (event[0] + maxEventDuration, event[1]))
                 
         return Annotation(shorterEvents, events.fs, len(events.mask))
+    
+    
+    def _mergeNeighbouringEvents(events : Annotation, minDurationBetweenEvents : float) -> Annotation:
+        """Merge events separated by less than longer than minDurationBetweenEvents.
+        Args:
+            events (Annotation): Annotation object containing events to split
+            minDurationBetweenEvents (float): minimum duration between events [seconds]
+
+        Returns:
+            Annotation: Returns a new Annotation instance with events separated by less than
+                minDurationBetweenEvents merged as one event.
+        """
+        
+        mergedEvents = events.events.copy()
+        
+        i = 1
+        while i < len(mergedEvents):
+            event = mergedEvents[i]
+            if  event[0] - mergedEvents[i-1][1] < minDurationBetweenEvents:
+                mergedEvents[i-1] = (mergedEvents[i-1][0], event[1])
+                del mergedEvents[i]
+                i -= 1
+            i += 1
+                
+        return Annotation(mergedEvents, events.fs, len(events.mask))
     
     
     def _extendEvents(events : Annotation, before : float, after : float) -> Annotation:
