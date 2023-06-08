@@ -70,13 +70,17 @@ class SampleScoring(_Scoring):
                               " (n={}) must match the number of samples in the "
                               "hypotheses Annotation (n={})").format(len(ref.mask), len(hyp.mask)))
         
+        self.tpMask = ref.mask & hyp.mask
+        self.fpMask = ~ref.mask & hyp.mask
+        self.fnMask = ref.mask & ~hyp.mask
+        
         self.fs = fs
         self.numSamples = len(ref.mask)
         
         self.refTrue = np.sum(ref.mask)
         
-        self.tp = np.sum(hyp.mask[ref.mask])
-        self.fp = np.sum(hyp.mask) - self.tp
+        self.tp = np.sum(self.tpMask)
+        self.fp = np.sum(self.fpMask)
         
         self.computeScores()
         

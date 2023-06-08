@@ -4,35 +4,31 @@ import numpy as np
 from annotations import Annotation
 import scoring
 
-def plotSampleScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
+def plotSampleScoring(ref : Annotation, hyp : Annotation, fs : int = 1) -> plt.figure:
     """Build an overview plot showing the outcome of sample scoring.
 
     Args:
         ref (Annotation): Reference annotations (ground-truth)
         hyp (Annotation): Hypotheses annotations (output of a ML pipeline)
+        fs (int): Sampling frequency of the labels. Default 1 Hz.
 
     Returns:
         plt.figure: Output matplotlib figure
     """
     
-    score = scoring.SampleScoring(ref, hyp)
-    time = np.arange(len(ref.mask)) / ref.fs
-    
-    # Compute event masks
-    tp = ref.mask & hyp.mask
-    fp = ~ref.mask & hyp.mask
-    fn = ref.mask & ~hyp.mask
+    score = scoring.SampleScoring(ref, hyp, fs)
+    time = np.arange(len(ref.mask)) / fs
 
     fig = plt.figure(figsize=(16, 3))
     
     # Plot background shading
-    plt.fill_between(time, 0, 1, where=tp, 
+    plt.fill_between(time, 0, 1, where=score.tpMask, 
                      alpha=0.2, color='tab:green',
                      transform=plt.gca().get_xaxis_transform())
-    plt.fill_between(time, 0, 1, where=fn, 
+    plt.fill_between(time, 0, 1, where=score.fnMask, 
                      alpha=0.2, color='tab:purple',
                      transform=plt.gca().get_xaxis_transform())
-    plt.fill_between(time, 0, 1, where=fp,
+    plt.fill_between(time, 0, 1, where=score.fpMask,
                      alpha=0.2, color='tab:red',
                      transform=plt.gca().get_xaxis_transform())
     
@@ -41,10 +37,10 @@ def plotSampleScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
     plt.plot(time, hyp.mask*0.4 + 0.1, 'k')
     
     # Plot Colored dots for detections
-    lineFn, = plt.plot(time[fn], fn[fn], 'o', color='tab:purple')
-    lineTp, = plt.plot(time[tp], tp[tp], 'o', color='tab:green')
-    plt.plot(time[tp], tp[tp]*0.5, 'o', color='tab:green')
-    lineFp, = plt.plot(time[fp], fp[fp]*0.5, 'o', color='tab:red')
+    lineFn, = plt.plot(time[score.fnMask], score.fnMask[score.fnMask], 'o', color='tab:purple')
+    lineTp, = plt.plot(time[score.tpMask], score.tpMask[score.tpMask], 'o', color='tab:green')
+    plt.plot(time[score.tpMask], score.tpMask[score.tpMask]*0.5, 'o', color='tab:green')
+    lineFp, = plt.plot(time[score.fpMask], score.fpMask[score.fpMask]*0.5, 'o', color='tab:red')
         
     # Text  
     plt.title('SampleScoring Scoring')
@@ -53,9 +49,9 @@ def plotSampleScoring(ref : Annotation, hyp : Annotation) -> plt.figure:
     plt.xlabel('time [s]')
     
     plt.legend([lineTp, lineFn, lineFp],
-               ['TP : {}'.format(np.sum(tp)), 
-                'FN : {}'.format(np.sum(fn)),
-                'FP : {}'.format(np.sum(fp))], loc=(1.02, 0.65))
+               ['TP : {}'.format(score.tp), 
+                'FN : {}'.format(np.sum(score.fnMask)),
+                'FP : {}'.format(score.fp)], loc=(1.02, 0.65))
     
     textstr = "• Sensitivity : {:.2f}\n".format(score.sensitivity)
     textstr+= "• Precision   : {:.2f}\n".format(score.precision)
