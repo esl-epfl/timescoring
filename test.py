@@ -57,14 +57,14 @@ class TestAnnotation(unittest.TestCase):
         TestAnnotation.checkMaskEvents(mask, events, fs, numSamples, 'event at start and end')
         
 
-class TestWindowScoring(unittest.TestCase):
-    def test_window_scoring(self): 
+class TestSampleScoring(unittest.TestCase):
+    def test_sample_scoring(self): 
         fs = 1
         
         # Simple events
         ref = Annotation([1,1,1,0,0,0,1,1,1,0], fs)
         hyp = Annotation([0,1,1,0,1,1,0,0,1,0], fs)
-        scores = scoring.WindowScoring(ref, hyp)
+        scores = scoring.SampleScoring(ref, hyp)
         np.testing.assert_equal(scores.sensitivity, 3/6, 'sensitivity simple test')
         np.testing.assert_equal(scores.precision, 3/5, 'precision simple test') 
         np.testing.assert_equal(scores.fpRate, 2*3600*24/10, 'FP/day simple test')
@@ -72,7 +72,7 @@ class TestWindowScoring(unittest.TestCase):
         # No detections
         ref = Annotation([1,1,1,0,0,0,1,1,1,0], fs)
         hyp = Annotation([0,0,0,0,0,0,0,0,0,0], fs)
-        scores = scoring.WindowScoring(ref, hyp)
+        scores = scoring.SampleScoring(ref, hyp)
         np.testing.assert_equal(scores.sensitivity, 0, 'sensitivity no detections')
         np.testing.assert_equal(scores.precision, np.nan, 'precision no detections') 
         np.testing.assert_equal(scores.fpRate, 0, 'FP/day no detections')
@@ -80,7 +80,7 @@ class TestWindowScoring(unittest.TestCase):
         # No events
         ref = Annotation([0,0,0,0,0,0,0,0,0,0], fs)
         hyp = Annotation([0,1,1,0,1,1,0,0,1,0], fs)
-        scores = scoring.WindowScoring(ref, hyp)
+        scores = scoring.SampleScoring(ref, hyp)
         np.testing.assert_equal(scores.sensitivity, np.nan, 'sensitivity no events')
         np.testing.assert_equal(scores.precision, 0, 'precision no events') 
         np.testing.assert_equal(scores.fpRate, 5*3600*24/10, 'FP/day no events')
@@ -89,7 +89,7 @@ class TestWindowScoring(unittest.TestCase):
         fs = 256
         ref = Annotation([(1.2, 5.4), (7.1, 8.7)], fs, fs*10)
         hyp = Annotation([(3, 5), (6.8, 9.2)], fs, fs*10)
-        scores = scoring.WindowScoring(ref, hyp)
+        scores = scoring.SampleScoring(ref, hyp)
         np.testing.assert_equal(scores.sensitivity, 4/6, 'sensitivity resampling')
         np.testing.assert_equal(scores.precision, 1, 'precision resampling') 
         np.testing.assert_equal(scores.fpRate, 0, 'FP/day resampling')
