@@ -86,8 +86,6 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
                 plt.scatter(x[0], y[0], color=color)
     
     
-    ref = scoring.EventScoring._splitLongEvents(ref, param.maxEventDuration)
-    hyp = scoring.EventScoring._splitLongEvents(hyp, param.maxEventDuration)
     score = scoring.EventScoring(ref, hyp, param)
     time = np.arange(len(ref.mask)) / ref.fs
 
@@ -102,29 +100,27 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
     lineFn, = plt.plot([], [], color='tab:purple', linewidth=5)
     lineFp, = plt.plot([], [], color='tab:red', linewidth=5)
     
-    # Plot TP & FN
-    detectionMask = np.zeros_like(ref.mask)
+    # Plot REF TP & FN
     for event in ref.events:
         # TP
-        if (np.sum(hyp.mask[int(event[0]*hyp.fs):int(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
-            _plotEvent([event[0], event[1]-(1/hyp.fs)], [1, 1], 'tab:green')
-            detectionMask[int(event[0]*ref.fs):int(event[1]*ref.fs)] = 1
+        if np.any(score.tpMask[round(event[0]*score.fs):round(event[1]*score.fs)]):
+            _plotEvent([event[0], event[1]-(1/ref.fs)], [1, 1], 'tab:green')
+            score.tpMask[round(event[0]*score.fs):round(event[1]*score.fs)] = 1
         else:
-            _plotEvent([event[0], event[1]-(1/hyp.fs)], [1, 1], 'tab:purple')
+            _plotEvent([event[0], event[1]-(1/ref.fs)], [1, 1], 'tab:purple')
     
-    # Plot FP 
-    extendedDetections = scoring.EventScoring._extendEvents(Annotation(detectionMask, ref.fs), param.toleranceStart, param.toleranceEnd)
+    # Plot HYP TP & FP 
     for event in hyp.events:
-        fpFlag = False
-        if np.any(~extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
-            _plotEvent([event[0], event[1]-(1/hyp.fs)], [0.5, 0.5], 'tab:red')
-            fpFlag = True
-        if np.any(extendedDetections.mask[int(event[0]*extendedDetections.fs):int(event[1]*extendedDetections.fs)]):
-            if fpFlag :
-                lineStyle = (0, (2, 2))
-            else:
-                lineStyle = 'solid'
-            plt.plot([event[0], event[1]-(1/hyp.fs)], [0.5, 0.5], color='tab:green', linewidth=5, solid_capstyle='butt', linestyle=lineStyle)
+        # FP
+        if np.all(~score.tpMask[round(event[0]*score.fs):round(event[1]*score.fs)]):
+            _plotEvent([event[0], event[1]-(1/ref.fs)], [0.5, 0.5], 'tab:red')
+        # TP
+        elif np.all(score.tpMask[round(event[0]*score.fs):round(event[1]*score.fs)]):
+            plt.plot([event[0], event[1]-(1/ref.fs)], [0.5, 0.5], color='tab:green', linewidth=5, solid_capstyle='butt', linestyle='solid')
+        # Mix TP, FP
+        else:
+            _plotEvent([event[0], event[1]-(1/ref.fs)], [0.5, 0.5], 'tab:red')
+            plt.plot([event[0], event[1]-(1/ref.fs)], [0.5, 0.5], color='tab:green', linewidth=5, solid_capstyle='butt', linestyle=(0, (2, 2)))
 
     # Text  
     plt.title('Event Scoring')
@@ -162,5 +158,11 @@ if __name__ == "__main__":
                         fs)
 
     fig = plotSampleScoring(ref, hyp)
-    fig = plotEventScoring(ref, hyp)
+    param = scoring.EventScoring.Parameters(
+            toleranceStart=0,
+            toleranceEnd=0,   
+            minOverlap=0,
+            maxEventDuration=5*60,
+            minDurationBetweenEvents=0)
+    fig = plotEventScoring(ref, hyp, param)
     plt.show()
