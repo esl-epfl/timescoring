@@ -43,6 +43,7 @@ Event based scoring allows to define certain parameters which are provided as an
 - `toleranceEnd` (float): Allow some tolerance on the end of an event without counting a false detection. Defaults to 10  # [seconds].
 - `minOverlap` (float): Minimum relative overlap between ref and hyp for a detection. Defaults to 0.66  # [relative].
 - `maxEventDuration` (float): Automatically split events longer than a given duration. Defaults to 5*60  # [seconds].
+- `minDurationBetweenEvents` (float): Automatically merge events that are separated by less than the given duration. Defaults to 90 # [seconds].
 
 ### Scores
 

@@ -137,7 +137,8 @@ class TestEventScoring(unittest.TestCase):
         # Simple events
         ref = Annotation([(40, 60)], fs, numSamples)
         hyp = Annotation([(10, 20), (42, 65)], fs, numSamples)
-        scores = scoring.EventScoring(ref, hyp)
+        param = scoring.EventScoring.Parameters(minDurationBetweenEvents = 0)
+        scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity no detections')
         np.testing.assert_equal(scores.precision, 0.5, 'precision no detections') 
         np.testing.assert_equal(scores.fpRate, 1*24, 'FP/day no detections')
@@ -193,7 +194,8 @@ class TestEventScoring(unittest.TestCase):
             toleranceStart=0,
             toleranceEnd=0,   
             minOverlap=0,
-            maxEventDuration=5*60)
+            maxEventDuration=5*60,
+            minDurationBetweenEvents=0)
         scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 2/3, 'sensitivity typical distribution')
         np.testing.assert_equal(scores.precision, 0.4, 'precision typical distribution') 
@@ -244,7 +246,8 @@ class TestEventScoring(unittest.TestCase):
                             0,0,0,0,0,0,0,0,0,1,1,1,1],
                             fs)
         message = 'typical - extended REF would hide FP'
-        scores = scoring.EventScoring(ref, hyp)
+        param.minOverlap = 0.6
+        scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 1/3, 'sensitivity : ' + message)
         np.testing.assert_equal(scores.precision, 0.25, 'precision : ' + message)
 
