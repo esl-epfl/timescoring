@@ -59,7 +59,7 @@ class TestAnnotation(unittest.TestCase):
 
 class TestWindowScoring(unittest.TestCase):
     def test_window_scoring(self): 
-        fs = 10
+        fs = 1
         
         # Simple events
         ref = Annotation([1,1,1,0,0,0,1,1,1,0], fs)
@@ -67,7 +67,7 @@ class TestWindowScoring(unittest.TestCase):
         scores = scoring.WindowScoring(ref, hyp)
         np.testing.assert_equal(scores.sensitivity, 3/6, 'sensitivity simple test')
         np.testing.assert_equal(scores.precision, 3/5, 'precision simple test') 
-        np.testing.assert_equal(scores.fpRate, 2*3600*24, 'FP/day simple test')
+        np.testing.assert_equal(scores.fpRate, 2*3600*24/10, 'FP/day simple test')
 
         # No detections
         ref = Annotation([1,1,1,0,0,0,1,1,1,0], fs)
@@ -83,7 +83,16 @@ class TestWindowScoring(unittest.TestCase):
         scores = scoring.WindowScoring(ref, hyp)
         np.testing.assert_equal(scores.sensitivity, np.nan, 'sensitivity no events')
         np.testing.assert_equal(scores.precision, 0, 'precision no events') 
-        np.testing.assert_equal(scores.fpRate, 5*3600*24, 'FP/day no events')
+        np.testing.assert_equal(scores.fpRate, 5*3600*24/10, 'FP/day no events')
+        
+        # Resampling
+        fs = 256
+        ref = Annotation([(1.2, 5.4), (7.1, 8.7)], fs, fs*10)
+        hyp = Annotation([(3, 5), (6.8, 9.2)], fs, fs*10)
+        scores = scoring.WindowScoring(ref, hyp)
+        np.testing.assert_equal(scores.sensitivity, 4/6, 'sensitivity resampling')
+        np.testing.assert_equal(scores.precision, 1, 'precision resampling') 
+        np.testing.assert_equal(scores.fpRate, 0, 'FP/day resampling')
 
 
 class TestEventScoring(unittest.TestCase):

@@ -53,14 +53,24 @@ class _Scoring:
 class WindowScoring(_Scoring):
     """Calculates performance metrics on the sample by sample basis"""
     
-    def __init__(self, ref : Annotation, hyp : Annotation):
-        """Computes a scoring on a sample by sample basis.
+    def __init__(self, ref : Annotation, hyp : Annotation, fs : int = 1):
+        """Computes scores on a sample by sample basis.
 
         Args:
             ref (Annotation): Reference annotations (ground-truth)
             hyp (Annotation): Hypotheses annotations (output of a ML pipeline)
+            fs (int): Sampling frequency of the labels. Default 1 Hz.
         """
-        self.fs = ref.fs
+        # Resample Data
+        ref = Annotation(ref.events, fs, int(len(ref.mask)/ref.fs*fs))
+        hyp = Annotation(hyp.events, fs, int(len(hyp.mask)/hyp.fs*fs))
+        
+        if len(ref.mask) != len(hyp.mask):
+            raise ValueError(("The number of samples in the reference Annotation"
+                              " (n={}) must match the number of samples in the "
+                              "hypotheses Annotation (n={})").format(len(ref.mask), len(hyp.mask)))
+        
+        self.fs = fs
         self.numSamples = len(ref.mask)
         
         self.refTrue = np.sum(ref.mask)
