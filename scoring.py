@@ -86,20 +86,20 @@ class EventScoring(_Scoring):
     class Parameters:
         """Parameters for event scoring"""
         
-        def __init__(self, toleranceStart : float = 1,
-                     toleranceEnd : float = 10,
-                     minOverlap : float = 1e-6,
+        def __init__(self, toleranceStart : float = 30,
+                     toleranceEnd : float = 60,
+                     minOverlap : float = 0,
                      maxEventDuration : float = 5*60,
                      minDurationBetweenEvents : float = 90):
             """Parameters for event scoring
 
             Args:
                 toleranceStart (float): Allow some tolerance on the start of an event 
-                    without counting a false detection. Defaults to 1  # [seconds].
+                    without counting a false detection. Defaults to 30  # [seconds].
                 toleranceEnd (float): Allow some tolerance on the end of an event 
-                    without counting a false detection. Defaults to 10  # [seconds].
+                    without counting a false detection. Defaults to 60  # [seconds].
                 minOverlap (float): Minimum relative overlap between ref and hyp for 
-                    a detection. Defaults to 1e-6 which corresponds to any overlap  # [relative].
+                    a detection. Defaults to 0 which corresponds to any overlap  # [relative].
                 maxEventDuration (float): Automatically split events longer than a 
                     given duration. Defaults to 5*60  # [seconds].
                 minDurationBetweenEvents (float): Automatically merge events that are
@@ -144,7 +144,7 @@ class EventScoring(_Scoring):
         detectionMask = np.zeros_like(ref.mask)
         extendedRef = EventScoring._extendEvents(ref, param.toleranceStart, param.toleranceEnd)
         for event in extendedRef.events:
-            if (np.sum(hyp.mask[round(event[0]*hyp.fs):round(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap:
+            if (np.sum(hyp.mask[round(event[0]*hyp.fs):round(event[1]*hyp.fs)])/hyp.fs)/(event[1]-event[0]) > param.minOverlap + 1e-6:
                 self.tp +=1
                 detectionMask[round(event[0]*ref.fs):round(event[1]*ref.fs)] = 1
                 
