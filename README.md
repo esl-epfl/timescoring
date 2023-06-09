@@ -17,8 +17,8 @@ In more details, we measures performance on the level of:
 
 Both methods are illustrated in the following figures :
 
-![Illustration of sample based scoring.](https://user-images.githubusercontent.com/747240/239865493-1f1e602d-d60f-4c95-9928-3c4f4d6a477c.png)
-![Illustration of event based scoring.](https://user-images.githubusercontent.com/747240/239865503-adf85e10-5840-40d4-a823-ac473cce8f73.png)
+![Illustration of sample based scoring.](https://user-images.githubusercontent.com/747240/244666630-cdfe12cc-22a2-4b23-be15-3e60dbedb437.png)
+![Illustration of event based scoring.](https://user-images.githubusercontent.com/747240/244666619-8dd90008-79af-4836-8769-daa204bbe16c.png)
 
 ## Code
 
@@ -83,20 +83,24 @@ labels = Annotation(events, fs, numSamples)
 ## Computing performance score ## 
 
 import scoring
+import visualization
 
-fs = 10
-ref = Annotation([1,1,1,0,0,0,1,1,1,0], fs)
-hyp = Annotation([0,1,1,0,1,1,0,0,1,0], fs)
+fs = 1
+duration = 66*60
+ref = Annotation([(8*60, 12*60), (30*60, 35*60), (48*60, 50*60)], fs, duration)
+hyp = Annotation([(8*60, 12*60), (28*60, 32*60), (50.5*60, 51*60), (60*60, 62*60)], fs, duration)
 scores = scoring.SampleScoring(ref, hyp)
+figSamples = visualization.plotSampleScoring(ref, hyp, param)
 
 # Scores can also be computed per event
 param = scoring.EventScoring.Parameters(
-    toleranceStart=0,
-    toleranceEnd=0,
-    minOverlap=0,
-    maxEventDuration=5*60,
-    minDurationBetweenEvents=0)
+        toleranceStart=30,
+        toleranceEnd=60,   
+        minOverlap=0,
+        maxEventDuration=5*60,
+        minDurationBetweenEvents=90)
 scores = scoring.EventScoring(ref, hyp, param)
+figEvents = visualization.plotEventScoring(ref, hyp, param)
 
 print("# Event scoring\n" +
       "- Sensitivity : {:.2f} \n".format(scores.sensitivity) + 
@@ -104,3 +108,5 @@ print("# Event scoring\n" +
       "- F1-score    : {:.2f} \n".format(scores.f1) + 
       "- FP/24h      : {:.2f} \n".format(scores.fpRate))
 ```
+
+A presentation explaining these metrics is available [here](https://drive.google.com/file/d/1-k6i2jVpU7bzqnV6zQPUKlfPkO7qaXau/view?usp=sharing).

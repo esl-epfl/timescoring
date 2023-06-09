@@ -165,21 +165,16 @@ def _buildLegend(lineTp, lineFn, lineFp, score, fig):
 
 if __name__ == "__main__":
     fs = 1
-    ref = Annotation([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,1,1,1,1,1,1,1,0,0,0, 0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,0],
-                        fs)
-    hyp = Annotation([0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,
-                        1,1,1,1,1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,
-                        0,0,0,0,0,0,0,0,0,1,1,1,1],
-                        fs)
+    duration = 66*60
+    ref = Annotation([(8*60, 12*60), (30*60, 35*60), (48*60, 50*60)], fs, duration)
+    hyp = Annotation([(8*60, 12*60), (28*60, 32*60), (50.5*60, 51*60), (60*60, 62*60)], fs, duration)
 
     fig = plotSampleScoring(ref, hyp)
     param = scoring.EventScoring.Parameters(
-            toleranceStart=0,
-            toleranceEnd=0,   
+            toleranceStart=30,
+            toleranceEnd=60,   
             minOverlap=0,
             maxEventDuration=5*60,
-            minDurationBetweenEvents=0)
+            minDurationBetweenEvents=90)
     fig = plotEventScoring(ref, hyp, param)
     plt.show()
