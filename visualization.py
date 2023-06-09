@@ -43,7 +43,7 @@ def plotSampleScoring(ref : Annotation, hyp : Annotation, fs : int = 1) -> plt.f
     lineFp, = plt.plot(time[score.fpMask], score.fpMask[score.fpMask]*0.5, 'o', color='tab:red')
         
     # Text  
-    plt.title('SampleScoring Scoring')
+    plt.title('Sample based Scoring')
 
     plt.yticks([0.3, 0.8], ['HYP', 'REF'])
     _scale_time_xaxis(fig)
