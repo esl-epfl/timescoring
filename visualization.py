@@ -46,7 +46,7 @@ def plotSampleScoring(ref : Annotation, hyp : Annotation, fs : int = 1) -> plt.f
     plt.title('SampleScoring Scoring')
 
     plt.yticks([0.3, 0.8], ['HYP', 'REF'])
-    plt.xlabel('time [s]')
+    _scale_time_xaxis(fig)
     
     plt.legend([lineTp, lineFn, lineFp],
                ['TP : {}'.format(score.tp), 
@@ -126,7 +126,7 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
     plt.title('Event Scoring')
 
     plt.yticks([0.3, 0.8], ['HYP', 'REF'])
-    plt.xlabel('time [s]')
+    _scale_time_xaxis(fig)
     
     plt.legend([lineTp, lineFn, lineFp],
                ['TP : {}'.format(np.sum(score.tp)), 
@@ -144,6 +144,31 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
     fig.subplots_adjust(right=0.86)  # Allow space for scoring text
         
     return fig
+
+
+def _scale_time_xaxis(fig : plt.figure):
+    """Scale x axis of a figure where initial values are in seconds.
+    
+    The function leaves the xaxis as is if the number of seconds to display is < 5*60
+    If it is larger than 5 minutes, xaxis is formatted as m:s
+    If it is larger than 5 hours, xaxis is formatted as h:m:s
+    
+    Args:
+        fig (plt.figure): figure to handle
+    """
+    
+    s2m = lambda x, _: f'{int(x/60)}:{int(x%60)}'
+    s2h = lambda x, _: f'{int(x/3600)}:{int((x/60)%60)}:{int(x%60)}'
+    
+    maxTime = fig.gca().get_xlim()[1]
+    if maxTime > 5*60*60:
+        fig.gca().xaxis.set_major_formatter(s2h)
+        fig.gca().set_xlabel('time [h:m:s]')
+    elif maxTime > 5*60:
+        fig.gca().xaxis.set_major_formatter(s2m)
+        fig.gca().set_xlabel('time [m:s]')
+    else:
+        fig.gca().set_xlabel('time [s]')
 
 
 if __name__ == "__main__":
