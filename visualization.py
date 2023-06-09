@@ -48,20 +48,7 @@ def plotSampleScoring(ref : Annotation, hyp : Annotation, fs : int = 1) -> plt.f
     plt.yticks([0.3, 0.8], ['HYP', 'REF'])
     _scale_time_xaxis(fig)
     
-    plt.legend([lineTp, lineFn, lineFp],
-               ['TP : {}'.format(score.tp), 
-                'FN : {}'.format(np.sum(score.fnMask)),
-                'FP : {}'.format(score.fp)], loc=(1.02, 0.65))
-    
-    textstr = "• Sensitivity : {:.2f}\n".format(score.sensitivity)
-    textstr+= "• Precision   : {:.2f}\n".format(score.precision)
-    textstr+= "• F1-score    : {:.2f}".format(score.f1)
-    fig.text(1.02, 0.05, textstr, fontsize=12, transform=plt.gca().transAxes)
-    
-    # Adjust spacing
-    plt.margins(x=0)  # No margin on X data
-    plt.tight_layout()
-    fig.subplots_adjust(right=0.86)  # Allow space for scoring text
+    _buildLegend(lineTp, lineFn, lineFp, score, fig)
         
     return fig
 
@@ -128,20 +115,7 @@ def plotEventScoring(ref : Annotation, hyp : Annotation, param : scoring.EventSc
     plt.yticks([0.3, 0.8], ['HYP', 'REF'])
     _scale_time_xaxis(fig)
     
-    plt.legend([lineTp, lineFn, lineFp],
-               ['TP : {}'.format(np.sum(score.tp)), 
-                'FN : {}'.format(np.sum(score.refTrue - score.tp)),
-                'FP : {}'.format(np.sum(score.fp))], loc=(1.02, 0.65))
-    
-    textstr = "• Sensitivity : {:.2f}\n".format(score.sensitivity)
-    textstr+= "• Precision   : {:.2f}\n".format(score.precision)
-    textstr+= "• F1-score    : {:.2f}".format(score.f1)
-    fig.text(1.02, 0.05, textstr, fontsize=12, transform=plt.gca().transAxes)
-    
-    # Adjust spacing
-    plt.margins(x=0)  # No margin on X data
-    plt.tight_layout()
-    fig.subplots_adjust(right=0.86)  # Allow space for scoring text
+    _buildLegend(lineTp, lineFn, lineFp, score, fig)
         
     return fig
 
@@ -169,6 +143,24 @@ def _scale_time_xaxis(fig : plt.figure):
         fig.gca().set_xlabel('time [m:s]')
     else:
         fig.gca().set_xlabel('time [s]')
+        
+        
+def _buildLegend(lineTp, lineFn, lineFp, score, fig):
+    """Build legend and adjust spacing for scoring text"""
+    plt.legend([lineTp, lineFn, lineFp],
+               ['TP : {}'.format(np.sum(score.tp)), 
+                'FN : {}'.format(np.sum(score.refTrue - score.tp)),
+                'FP : {}'.format(np.sum(score.fp))], loc=(1.02, 0.65))
+    
+    textstr = "• Sensitivity : {:.2f}\n".format(score.sensitivity)
+    textstr+= "• Precision   : {:.2f}\n".format(score.precision)
+    textstr+= "• F1-score    : {:.2f}".format(score.f1)
+    fig.text(1.02, 0.05, textstr, fontsize=12, transform=plt.gca().transAxes)
+    
+    # Adjust spacing
+    plt.margins(x=0)  # No margin on X data
+    plt.tight_layout()
+    fig.subplots_adjust(right=0.86)  # Allow space for scoring text
 
 
 if __name__ == "__main__":
