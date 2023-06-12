@@ -1,5 +1,8 @@
 # Library for measuring performance of time series classification
 
+![PyPI](https://img.shields.io/pypi/v/timescoring?style=flat-square)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/esl-epfl/epilepsy_performance_metrics/python-app.yml?label=unittest&style=flat-square)
+
 ## Motivation
 
 For temporal and sequential data (e.g. in biomedical applications), standard performance evaluation metrics, such as sensitivity and specificity, may not always be the most appropriate and can even be misleading. Evaluation metrics must ultimately reflect the needs of users and also be sufficiently sensitive to guide algorithm development.

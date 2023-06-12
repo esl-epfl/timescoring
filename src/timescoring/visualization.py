@@ -18,7 +18,10 @@ def plotSampleScoring(ref: Annotation, hyp: Annotation, fs: int = 1) -> plt.figu
     """
 
     score = scoring.SampleScoring(ref, hyp, fs)
-    time = np.arange(len(ref.mask)) / fs
+    time = np.arange(len(score.tpMask)) / fs
+    # Resample Data
+    ref = Annotation(ref.events, fs, round(len(ref.mask) / ref.fs * fs))
+    hyp = Annotation(hyp.events, fs, round(len(hyp.mask) / hyp.fs * fs))
 
     fig = plt.figure(figsize=(16, 3))
 
