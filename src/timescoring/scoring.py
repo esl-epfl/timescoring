@@ -6,7 +6,7 @@ __email__ = "jonathan.dan at epfl.ch"
 
 import numpy as np
 
-from annotations import Annotation
+from .annotations import Annotation
 
 class _Scoring:
     """" Base class for different scoring methods. The class provides the common

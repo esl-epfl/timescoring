@@ -20,11 +20,15 @@ Both methods are illustrated in the following figures :
 ![Illustration of sample based scoring.](https://user-images.githubusercontent.com/747240/244666630-cdfe12cc-22a2-4b23-be15-3e60dbedb437.png)
 ![Illustration of event based scoring.](https://user-images.githubusercontent.com/747240/244666619-8dd90008-79af-4836-8769-daa204bbe16c.png)
 
+## Installation
+
+The package can be installed through pip using the following command :
+
+`pip install timescoring`
+
 ## Code
 
-An example usage of the library is provided in `example.ipynb`.
-
-The library provides three classes :
+The `timescoring` package provides three classes :
 
 - `annotation.Annotation` : store annotations
 - `scoring.SampleScoring(ref, hyp)` : Compute sample based scoring
@@ -58,7 +62,7 @@ Scores are provided as attributes of the scoring class. The following metrics ca
 ```python
 ## Loading Annotations ##
 
-from annotations import Annotation
+from timescoring.annotations import Annotation
 
 # Annotation objects can be instantiated from a binary mask
 
@@ -82,15 +86,15 @@ labels = Annotation(events, fs, numSamples)
 
 ## Computing performance score ## 
 
-import scoring
-import visualization
+from timescoring import scoring
+from timescoring import visualization
 
 fs = 1
 duration = 66*60
 ref = Annotation([(8*60, 12*60), (30*60, 35*60), (48*60, 50*60)], fs, duration)
 hyp = Annotation([(8*60, 12*60), (28*60, 32*60), (50.5*60, 51*60), (60*60, 62*60)], fs, duration)
 scores = scoring.SampleScoring(ref, hyp)
-figSamples = visualization.plotSampleScoring(ref, hyp, param)
+figSamples = visualization.plotSampleScoring(ref, hyp)
 
 # Scores can also be computed per event
 param = scoring.EventScoring.Parameters(

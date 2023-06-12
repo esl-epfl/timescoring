@@ -8,8 +8,8 @@ import unittest
 
 import numpy as np
 
-from annotations import Annotation
-import scoring 
+from src.timescoring.annotations import Annotation
+from src.timescoring import scoring 
 
 class TestAnnotation(unittest.TestCase):
     def assertListOfTupleEqual(expected, actual, message):

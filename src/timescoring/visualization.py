@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from annotations import Annotation
-import scoring
+from .annotations import Annotation
+from . import scoring
 
 def plotSampleScoring(ref : Annotation, hyp : Annotation, fs : int = 1) -> plt.figure:
     """Build an overview plot showing the outcome of sample scoring.
