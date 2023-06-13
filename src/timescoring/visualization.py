@@ -139,6 +139,48 @@ def plotEventScoring(ref: Annotation, hyp: Annotation,
     return plt.gcf()
 
 
+def plotIndividualEvents(ref: Annotation, hyp: Annotation,
+                         param: scoring.EventScoring.Parameters = scoring.EventScoring.Parameters()) -> plt.figure:
+    """Plot each individual event in event scoring.
+    Events are organized in a grid with the evennts centered in 5 minute windows.
+
+    Args:
+        ref (Annotation): Reference annotations (ground - truth)
+        hyp (Annotation): Hypotheses annotations (output of a ML pipeline)
+        param(EventScoring.Parameters, optional):  Parameters for event scoring.
+            Defaults to default values.
+
+    Returns:
+        plt.figure: Output matplotlib figure
+    """
+    score = scoring.EventScoring(ref, hyp, param)
+
+    # Get list of windows to plot (windows are 5 minutes long centered around events)
+    duration = 5 * 60
+    listofWindows = list()
+    plottedMask = np.zeros_like(score.ref.mask)
+    for i, event in enumerate(score.ref.events + score.hyp.events):
+        center = event[0] + (event[1] - event[0]) / 2
+        window = (max(0, center - duration / 2), min(len(plottedMask) / score.fs, center + duration / 2))
+
+        if not np.all(plottedMask[round(event[0] * score.fs):round(event[1] * score.fs)]):
+            plottedMask[round(window[0] * score.fs):round(window[1] * score.fs)] = 1
+            listofWindows.append(window)
+
+    # Plot windows in a grid configuration
+    NCOL = 3
+    nrow = int(np.ceil(len(listofWindows) / NCOL))
+    plt.figure(figsize=(16, nrow * 2))
+    for i, window in enumerate(listofWindows):
+        ax = plt.subplot(nrow, NCOL, i + 1)
+        plotEventScoring(ref, hyp, showLegend=False, ax=ax)
+        ax.set_xlim(window)
+        plt.title('Event {}'.format(i))
+    plt.tight_layout()
+
+    return plt.gcf()
+
+
 def _scale_time_xaxis(ax: Axes):
     """Scale x axis of a figure where initial values are in seconds.
 
