@@ -63,22 +63,22 @@ class SampleScoring(_Scoring):
             fs (int): Sampling frequency of the labels. Default 1 Hz.
         """
         # Resample Data
-        ref = Annotation(ref.events, fs, round(len(ref.mask) / ref.fs * fs))
-        hyp = Annotation(hyp.events, fs, round(len(hyp.mask) / hyp.fs * fs))
+        self.ref = Annotation(ref.events, fs, round(len(ref.mask) / ref.fs * fs))
+        self.hyp = Annotation(hyp.events, fs, round(len(hyp.mask) / hyp.fs * fs))
 
-        if len(ref.mask) != len(hyp.mask):
+        if len(self.ref.mask) != len(self.hyp.mask):
             raise ValueError(("The number of samples in the reference Annotation"
                               " (n={}) must match the number of samples in the "
-                              "hypotheses Annotation (n={})").format(len(ref.mask), len(hyp.mask)))
+                              "hypotheses Annotation (n={})").format(len(self.ref.mask), len(self.hyp.mask)))
 
-        self.tpMask = ref.mask & hyp.mask
-        self.fpMask = ~ref.mask & hyp.mask
-        self.fnMask = ref.mask & ~hyp.mask
+        self.tpMask = self.ref.mask & self.hyp.mask
+        self.fpMask = ~self.ref.mask & self.hyp.mask
+        self.fnMask = self.ref.mask & ~self.hyp.mask
 
         self.fs = fs
-        self.numSamples = len(ref.mask)
+        self.numSamples = len(self.ref.mask)
 
-        self.refTrue = np.sum(ref.mask)
+        self.refTrue = np.sum(self.ref.mask)
 
         self.tp = np.sum(self.tpMask)
         self.fp = np.sum(self.fpMask)
@@ -126,38 +126,37 @@ class EventScoring(_Scoring):
                 Defaults to default values.
         """
         # Resample data
-        fs = 10  # Operate at a time precision of 10 Hz
-        ref = Annotation(ref.events, fs, round(len(ref.mask) / ref.fs * fs))
-        hyp = Annotation(hyp.events, fs, round(len(hyp.mask) / hyp.fs * fs))
+        self.fs = 10  # Operate at a time precision of 10 Hz
+        self.ref = Annotation(ref.events, self.fs, round(len(ref.mask) / ref.fs * self.fs))
+        self.hyp = Annotation(hyp.events, self.fs, round(len(hyp.mask) / hyp.fs * self.fs))
 
         # Merge events separated by less than param.minDurationBetweenEvents
-        ref = EventScoring._mergeNeighbouringEvents(ref, param.minDurationBetweenEvents)
-        hyp = EventScoring._mergeNeighbouringEvents(hyp, param.minDurationBetweenEvents)
+        self.ref = EventScoring._mergeNeighbouringEvents(self.ref, param.minDurationBetweenEvents)
+        self.hyp = EventScoring._mergeNeighbouringEvents(self.hyp, param.minDurationBetweenEvents)
 
         # Split long events to param.maxEventDuration
-        ref = EventScoring._splitLongEvents(ref, param.maxEventDuration)
-        hyp = EventScoring._splitLongEvents(hyp, param.maxEventDuration)
+        self.ref = EventScoring._splitLongEvents(self.ref, param.maxEventDuration)
+        self.hyp = EventScoring._splitLongEvents(self.hyp, param.maxEventDuration)
 
-        self.fs = ref.fs
-        self.numSamples = len(ref.mask)
+        self.numSamples = len(self.ref.mask)
 
-        self.refTrue = len(ref.events)
+        self.refTrue = len(self.ref.events)
 
         # Count True detections
         self.tp = 0
-        self.tpMask = np.zeros_like(ref.mask)
-        extendedRef = EventScoring._extendEvents(ref, param.toleranceStart, param.toleranceEnd)
+        self.tpMask = np.zeros_like(self.ref.mask)
+        extendedRef = EventScoring._extendEvents(self.ref, param.toleranceStart, param.toleranceEnd)
         for event in extendedRef.events:
-            relativeOverlap = (np.sum(hyp.mask[round(event[0] * hyp.fs):round(event[1] * hyp.fs)]) / hyp.fs
+            relativeOverlap = (np.sum(self.hyp.mask[round(event[0] * self.fs):round(event[1] * self.fs)]) / self.fs
                                ) / (event[1] - event[0])
             if relativeOverlap > param.minOverlap + 1e-6:
                 self.tp += 1
-                self.tpMask[round(event[0] * ref.fs):round(event[1] * ref.fs)] = 1
+                self.tpMask[round(event[0] * self.fs):round(event[1] * self.fs)] = 1
 
         # Count False detections
         self.fp = 0
-        for event in hyp.events:
-            if np.any(~self.tpMask[round(event[0] * ref.fs):round(event[1] * ref.fs)]):
+        for event in self.hyp.events:
+            if np.any(~self.tpMask[round(event[0] * self.fs):round(event[1] * self.fs)]):
                 self.fp += 1
 
         self.computeScores()
