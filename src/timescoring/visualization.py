@@ -108,24 +108,27 @@ def plotEventScoring(ref: Annotation, hyp: Annotation,
         # TP
         if np.any(score.tpMask[round(event[0] * score.fs):round(event[1] * score.fs)]):
             _plotEvent([event[0], event[1] - (1 / ref.fs)], [1, 1], 'tab:green', ax)
-            score.tpMask[round(event[0] * score.fs):round(event[1] * score.fs)] = 1
         else:
             _plotEvent([event[0], event[1] - (1 / ref.fs)], [1, 1], 'tab:purple', ax)
+
+        _plotSplitLongEvents(event, param.maxEventDuration, [0.6, 1.01])
 
     # Plot HYP TP & FP
     for event in hyp.events:
         # FP
         if np.all(~score.tpMask[round(event[0] * score.fs):round(event[1] * score.fs)]):
-            _plotEvent([event[0], event[1] - (1 / ref.fs)], [0.5, 0.5], 'tab:red', ax)
+            _plotEvent([event[0], event[1] - (1 / hyp.fs)], [0.5, 0.5], 'tab:red', ax)
         # TP
         elif np.all(score.tpMask[round(event[0] * score.fs):round(event[1] * score.fs)]):
-            ax.plot([event[0], event[1] - (1 / ref.fs)], [0.5, 0.5],
+            ax.plot([event[0], event[1] - (1 / hyp.fs)], [0.5, 0.5],
                     color='tab:green', linewidth=5, solid_capstyle='butt', linestyle='solid')
         # Mix TP, FP
         else:
-            _plotEvent([event[0], event[1] - (1 / ref.fs)], [0.5, 0.5], 'tab:red', ax)
-            ax.plot([event[0], event[1] - (1 / ref.fs)], [0.5, 0.5],
+            _plotEvent([event[0], event[1] - (1 / hyp.fs)], [0.5, 0.5], 'tab:red', ax)
+            ax.plot([event[0], event[1] - (1 / hyp.fs)], [0.5, 0.5],
                     color='tab:green', linewidth=5, solid_capstyle='butt', linestyle=(0, (2, 2)))
+
+        _plotSplitLongEvents(event, param.maxEventDuration, [0.1, 0.51])
 
     # Text
     plt.title('Event Scoring')
@@ -225,3 +228,11 @@ def _buildLegend(lineTp, lineFn, lineFp, score, ax):
     ax.margins(x=0)  # No margin on X data
     plt.tight_layout()
     plt.subplots_adjust(right=0.86)  # Allow space for scoring text
+
+
+def _plotSplitLongEvents(event, maxEventDuration, y):
+    """ Visualize split of long events """
+    t = event[0] + maxEventDuration
+    while t < event[1]:
+        plt.plot([t, t], y, 'k')
+        t += maxEventDuration
