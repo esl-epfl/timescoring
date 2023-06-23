@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+import matplotlib.colors as mc
+import colorsys
 import numpy as np
 
 from .annotations import Annotation
@@ -80,13 +82,6 @@ def plotEventScoring(ref: Annotation, hyp: Annotation,
     Returns:
         plt.figure: Output matplotlib figure
     """
-    def _plotEvent(x, y, color, ax):
-        ax.axvspan(x[0], x[1], alpha=0.2, color=color)
-        if x[1] - x[0] > 0:
-            ax.plot(x, y, color=color, linewidth=5, solid_capstyle='butt')
-        else:
-            ax.scatter(x[0], y[0], color=color)
-
     score = scoring.EventScoring(ref, hyp, param)
     time = np.arange(len(ref.mask)) / ref.fs
 
@@ -97,6 +92,11 @@ def plotEventScoring(ref: Annotation, hyp: Annotation,
     # Plot Labels
     ax.plot(time, ref.mask * 0.4 + 0.6, 'k')
     ax.plot(time, hyp.mask * 0.4 + 0.1, 'k')
+    # Plot splitting of events
+    for event in ref.events:
+        _plotSplitLongEvents(event, param.maxEventDuration, [0.6, 1])
+    for event in hyp.events:
+        _plotSplitLongEvents(event, param.maxEventDuration, [0.1, 0.5])
 
     # Initialize lines for legend
     lineTp, = ax.plot([], [], color='tab:green', linewidth=5)
@@ -104,31 +104,29 @@ def plotEventScoring(ref: Annotation, hyp: Annotation,
     lineFp, = ax.plot([], [], color='tab:red', linewidth=5)
 
     # Plot REF TP & FN
-    for event in ref.events:
+    for event in score.ref.events:
         # TP
         if np.any(score.tpMask[round(event[0] * score.fs):round(event[1] * score.fs)]):
-            _plotEvent([event[0], event[1] - (1 / ref.fs)], [1, 1], 'tab:green', ax)
+            color = 'tab:green'
         else:
-            _plotEvent([event[0], event[1] - (1 / ref.fs)], [1, 1], 'tab:purple', ax)
-
-        _plotSplitLongEvents(event, param.maxEventDuration, [0.6, 1.01])
+            color = 'tab:purple'
+        _plotEvent([event[0], event[1] - (1 / score.fs)], [1, 1], color, ax,
+                   [max(0, event[0] - param.toleranceStart), min(time[-1], event[1] + param.toleranceEnd - (1 / ref.fs))])
 
     # Plot HYP TP & FP
-    for event in hyp.events:
+    for event in score.hyp.events:
         # FP
         if np.all(~score.tpMask[round(event[0] * score.fs):round(event[1] * score.fs)]):
-            _plotEvent([event[0], event[1] - (1 / hyp.fs)], [0.5, 0.5], 'tab:red', ax)
+            _plotEvent([event[0], event[1] - (1 / score.fs)], [0.5, 0.5], 'tab:red', ax)
         # TP
         elif np.all(score.tpMask[round(event[0] * score.fs):round(event[1] * score.fs)]):
-            ax.plot([event[0], event[1] - (1 / hyp.fs)], [0.5, 0.5],
+            ax.plot([event[0], event[1] - (1 / score.fs)], [0.5, 0.5],
                     color='tab:green', linewidth=5, solid_capstyle='butt', linestyle='solid')
         # Mix TP, FP
         else:
-            _plotEvent([event[0], event[1] - (1 / hyp.fs)], [0.5, 0.5], 'tab:red', ax)
-            ax.plot([event[0], event[1] - (1 / hyp.fs)], [0.5, 0.5],
+            _plotEvent([event[0], event[1] - (1 / score.fs)], [0.5, 0.5], 'tab:red', ax, zorder=1.7)
+            ax.plot([event[0], event[1] - (1 / score.fs)], [0.5, 0.5],
                     color='tab:green', linewidth=5, solid_capstyle='butt', linestyle=(0, (2, 2)))
-
-        _plotSplitLongEvents(event, param.maxEventDuration, [0.1, 0.51])
 
     # Text
     plt.title('Event Scoring')
@@ -230,9 +228,28 @@ def _buildLegend(lineTp, lineFn, lineFp, score, ax):
     plt.subplots_adjust(right=0.86)  # Allow space for scoring text
 
 
+def _plotEvent(x, y, color, ax, bckg=None, zorder=1.8):
+    if bckg is None:
+        bckg = x
+    ax.axvspan(bckg[0], bckg[1], color=adjust_lightness(color, 0.2), zorder=zorder)
+    if x[1] - x[0] > 0:
+        ax.plot(x, y, color=color, linewidth=5, solid_capstyle='butt')
+    else:
+        ax.scatter(x[0], y[0], color=color)
+
+
 def _plotSplitLongEvents(event, maxEventDuration, y):
     """ Visualize split of long events """
     t = event[0] + maxEventDuration
     while t < event[1]:
-        plt.plot([t, t], y, 'k')
+        plt.plot([t, t], y, '--k', zorder=1.9)
         t += maxEventDuration
+
+
+def adjust_lightness(color, amount=0.5):
+    try:
+        c = mc.cnames[color]
+    except KeyError:
+        c = color
+    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
+    return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
