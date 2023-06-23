@@ -20,8 +20,8 @@ In more details, we measures performance on the level of:
 
 Both methods are illustrated in the following figures :
 
-![Illustration of sample based scoring.](https://user-images.githubusercontent.com/747240/244666630-cdfe12cc-22a2-4b23-be15-3e60dbedb437.png)
-![Illustration of event based scoring.](https://user-images.githubusercontent.com/747240/244666619-8dd90008-79af-4836-8769-daa204bbe16c.png)
+![Illustration of sample based scoring.](https://user-images.githubusercontent.com/747240/248309097-b7f76fde-c87a-41df-812d-9821375b640e.png)
+![Illustration of event based scoring.](https://user-images.githubusercontent.com/747240/248308898-64b4ae39-d02f-4f06-9b10-f07aaf6110d1.png)
 
 ## Installation
 
