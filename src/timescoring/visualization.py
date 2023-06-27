@@ -110,22 +110,22 @@ def plotEventScoring(ref: Annotation, hyp: Annotation,
             color = 'tab:green'
         else:
             color = 'tab:purple'
-        _plotEvent([event[0], event[1] - (1 / score.fs)], [1, 1], color, ax,
+        _plotEvent([event[0], event[1] - (1 / ref.fs)], [1, 1], color, ax,
                    [max(0, event[0] - param.toleranceStart), min(time[-1], event[1] + param.toleranceEnd - (1 / ref.fs))])
 
     # Plot HYP TP & FP
     for event in score.hyp.events:
         # FP
         if np.all(~score.tpMask[round(event[0] * score.fs):round(event[1] * score.fs)]):
-            _plotEvent([event[0], event[1] - (1 / score.fs)], [0.5, 0.5], 'tab:red', ax)
+            _plotEvent([event[0], event[1] - (1 / ref.fs)], [0.5, 0.5], 'tab:red', ax)
         # TP
         elif np.all(score.tpMask[round(event[0] * score.fs):round(event[1] * score.fs)]):
-            ax.plot([event[0], event[1] - (1 / score.fs)], [0.5, 0.5],
+            ax.plot([event[0], event[1] - (1 / ref.fs)], [0.5, 0.5],
                     color='tab:green', linewidth=5, solid_capstyle='butt', linestyle='solid')
         # Mix TP, FP
         else:
-            _plotEvent([event[0], event[1] - (1 / score.fs)], [0.5, 0.5], 'tab:red', ax, zorder=1.7)
-            ax.plot([event[0], event[1] - (1 / score.fs)], [0.5, 0.5],
+            _plotEvent([event[0], event[1] - (1 / ref.fs)], [0.5, 0.5], 'tab:red', ax, zorder=1.7)
+            ax.plot([event[0], event[1] - (1 / ref.fs)], [0.5, 0.5],
                     color='tab:green', linewidth=5, solid_capstyle='butt', linestyle=(0, (2, 2)))
 
     # Text
