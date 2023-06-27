@@ -42,15 +42,25 @@ class TestAnnotation(unittest.TestCase):
         events = [(0.0, 1.0)]
         TestAnnotation.checkMaskEvents(mask, events, fs, numSamples, 'Event = file duration')
 
-        # Event at start
+        # Event at start - single events
+        mask = [1, 1, 1, 1, 0, 0, 0, 0, 0, 0]
+        events = [(0.0, 0.4)]
+        TestAnnotation.checkMaskEvents(mask, events, fs, numSamples, 'event at start - single events')
+
+        # Event at end - single events
+        mask = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+        events = [(0.7, 1.)]
+        TestAnnotation.checkMaskEvents(mask, events, fs, numSamples, 'event at end - single events')
+
+        # Event at start - multiple events
         mask = [1, 1, 1, 1, 0, 0, 1, 0, 0, 0]
         events = [(0.0, 0.4), (0.6, 0.7)]
-        TestAnnotation.checkMaskEvents(mask, events, fs, numSamples, 'event at start')
+        TestAnnotation.checkMaskEvents(mask, events, fs, numSamples, 'event at start - multiple events')
 
-        # Event at end
+        # Event at end - multiple events
         mask = [0, 1, 1, 0, 0, 0, 0, 1, 1, 1]
         events = [(0.1, 0.3), (0.7, 1.)]
-        TestAnnotation.checkMaskEvents(mask, events, fs, numSamples, 'event at end')
+        TestAnnotation.checkMaskEvents(mask, events, fs, numSamples, 'event at end - multiple events')
 
         # Event at start and end
         mask = [1, 1, 1, 0, 0, 0, 0, 1, 0, 1]

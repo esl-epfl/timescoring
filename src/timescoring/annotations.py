@@ -68,7 +68,7 @@ class Annotation:
             end_i = np.where(np.diff(np.array(data, dtype=int)) == -1)[0]
 
             # No transitions and first sample is positive -> event is duration of file
-            if len(start_i) == 0 and data[0]:
+            if len(start_i) == 0 and len(end_i) == 0 and data[0]:
                 events.append((0, len(data) / fs))
             else:
                 # Edge effect - First sample is an event
