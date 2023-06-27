@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "timescoring"
-version = "0.0.4"
+version = "0.0.5"
 authors = [
   { name="Jonathan Dan", email="jonathan.dan@epfl.ch" },
   { name="Una Pale", email="una.pale@epfl.ch" },
