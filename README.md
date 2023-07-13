@@ -25,9 +25,27 @@ Both methods are illustrated in the following figures :
 
 ## Installation
 
-The package can be installed through pip using the following command :
+The timescoring package is released for macOS, Windows and Linux on [PyPi](https://pypi.org/project/timescoring/). It can be installed using `pip` :
 
-`pip install timescoring`
+```bash
+python -m pip install -U pip
+python -m pip install -U timescoring
+```
+
+The package is also available on [conda-forge](https://anaconda.org/conda-forge/timescoring). It can be installed using `conda` :
+
+```bash
+conda install -c conda-forge timescoring
+```
+
+It can also be installed from source with a modern build of `pip` :
+
+```bash
+python -m pip install -U pip
+git clone https://github.com/esl-epfl/epilepsy_performance_metrics.git
+cd matplotlib epilepsy_performance_metrics
+python -m pip install -e .
+```
 
 ## Code
 
