@@ -43,7 +43,7 @@ It can also be installed from source with a modern build of `pip` :
 ```bash
 python -m pip install -U pip
 git clone https://github.com/esl-epfl/epilepsy_performance_metrics.git
-cd matplotlib epilepsy_performance_metrics
+cd epilepsy_performance_metrics
 python -m pip install -e .
 ```
 
