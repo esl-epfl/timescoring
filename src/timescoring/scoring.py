@@ -149,16 +149,19 @@ class EventScoring(_Scoring):
         self.tpMask = np.zeros_like(self.ref.mask)
         extendedRef = EventScoring._extendEvents(self.ref, param.toleranceStart, param.toleranceEnd)
         for event in extendedRef.events:
-            relativeOverlap = (np.sum(self.hyp.mask[round(event[0] * self.fs):round(event[1] * self.fs)]) / self.fs
-                               ) / (event[1] - event[0])
+            start_idx = int(round(event[0] * self.fs))
+            end_idx = int(round(event[1] * self.fs))
+            relativeOverlap = (np.sum(self.hyp.mask[start_idx:end_idx]) / self.fs) / (event[1] - event[0])
             if relativeOverlap > param.minOverlap + 1e-6:
                 self.tp += 1
-                self.tpMask[round(event[0] * self.fs):round(event[1] * self.fs)] = 1
+                self.tpMask[start_idx: end_idx] = 1
 
         # Count False detections
         self.fp = 0
         for event in self.hyp.events:
-            if np.any(~self.tpMask[round(event[0] * self.fs):round(event[1] * self.fs)]):
+            start_idx = int(round(event[0] * self.fs))
+            end_idx = int(round(event[1] * self.fs))
+            if np.any(~self.tpMask[start_idx:end_idx]):
                 self.fp += 1
 
         self.computeScores()
