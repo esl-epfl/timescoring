@@ -5,7 +5,7 @@ __author__ = "Jonathan Dan"
 __email__ = "jonathan.dan at epfl.ch"
 
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 from nptyping import Bool, NDArray, Shape
@@ -21,9 +21,9 @@ class Annotation:
     """
     events: List[Tuple[int, int]]
     mask: NDArray[Shape["Size"], Bool]
-    fs: int
+    fs: Union[int, float]
 
-    def __init__(self, data, fs: int, numSamples: int = None):
+    def __init__(self, data, fs:Union[int, float], numSamples: int = None):
         """Initialize an annotation instance.
         - Annotation(mask, fs):
         This can either be done by providing a binary vector where positive labels are
@@ -37,7 +37,7 @@ class Annotation:
 
         Args:
             data (List[Tuple[int, int]] OR NDArray[Bool]): _description_
-            fs (int): Sampling frequency in Hertz of the annotations.
+            fs (Union[int, float]): Sampling frequency in Hertz of the annotations.
             numSamples (int, optional): Is required when initalizing by providing a
                 list of (start, stop) tuples. It indicates the number of annotation
                 samples in the annotation binary mask. It should be left to None if
@@ -54,7 +54,7 @@ class Annotation:
             # Build binary mask associated with list of events
             mask = np.zeros((numSamples, ), dtype=np.bool_)
             for event in data:
-                mask[round(event[0] * fs):round(event[1] * fs)] = True
+                mask[int(round(event[0] * fs)):int(round(event[1] * fs))] = True
             object.__setattr__(self, 'events', data)  # Write to frozen object
             object.__setattr__(self, 'mask', mask)  # Write to frozen object
 
