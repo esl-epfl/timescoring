@@ -7,13 +7,14 @@ __email__ = "jonathan.dan at epfl.ch"
 import numpy as np
 
 from .annotations import Annotation
+from typing import Union
 
 
 class _Scoring:
     """" Base class for different scoring methods. The class provides the common
     attributes and computation of common scores based on these attributes.
     """
-    fs: int
+    fs: Union[int, float]
     numSamples: int
 
     refTrue: int
@@ -54,17 +55,18 @@ class _Scoring:
 class SampleScoring(_Scoring):
     """Calculates performance metrics on the sample by sample basis"""
 
-    def __init__(self, ref: Annotation, hyp: Annotation, fs: int = 1):
+    def __init__(self, ref: Annotation, hyp: Annotation, fs: Union[int, float] = 1):
         """Computes scores on a sample by sample basis.
 
         Args:
             ref (Annotation): Reference annotations (ground-truth)
             hyp (Annotation): Hypotheses annotations (output of a ML pipeline)
-            fs (int): Sampling frequency of the labels. Default 1 Hz.
+            fs (Union[int, float]): Sampling frequency of the labels. Default 1 Hz.
         """
         # Resample Data
-        self.ref = Annotation(ref.events, fs, round(len(ref.mask) / ref.fs * fs))
-        self.hyp = Annotation(hyp.events, fs, round(len(hyp.mask) / hyp.fs * fs))
+
+        self.ref = Annotation(ref.events, fs, int(round(len(ref.mask) / ref.fs * fs)))
+        self.hyp = Annotation(hyp.events, fs, int(round(len(hyp.mask) / hyp.fs * fs)))
 
         if len(self.ref.mask) != len(self.hyp.mask):
             raise ValueError(("The number of samples in the reference Annotation"
