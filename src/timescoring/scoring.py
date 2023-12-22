@@ -128,7 +128,7 @@ class EventScoring(_Scoring):
                 Defaults to default values.
         """
         # Resample data
-        self.fs = 10  # Operate at a time precision of 10 Hz
+        self.fs = 1/12  # Operate at a time precision of 10 Hz
         self.ref = Annotation(ref.events, self.fs, round(len(ref.mask) / ref.fs * self.fs))
         self.hyp = Annotation(hyp.events, self.fs, round(len(hyp.mask) / hyp.fs * self.fs))
 
