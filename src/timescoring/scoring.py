@@ -7,13 +7,14 @@ __email__ = "jonathan.dan at epfl.ch"
 import numpy as np
 
 from .annotations import Annotation
+from typing import Union
 
 
 class _Scoring:
     """" Base class for different scoring methods. The class provides the common
     attributes and computation of common scores based on these attributes.
     """
-    fs: int
+    fs: Union[int, float]
     numSamples: int
 
     refTrue: int
@@ -54,17 +55,18 @@ class _Scoring:
 class SampleScoring(_Scoring):
     """Calculates performance metrics on the sample by sample basis"""
 
-    def __init__(self, ref: Annotation, hyp: Annotation, fs: int = 1):
+    def __init__(self, ref: Annotation, hyp: Annotation, fs: Union[int, float] = 1):
         """Computes scores on a sample by sample basis.
 
         Args:
             ref (Annotation): Reference annotations (ground-truth)
             hyp (Annotation): Hypotheses annotations (output of a ML pipeline)
-            fs (int): Sampling frequency of the labels. Default 1 Hz.
+            fs (Union[int, float]): Sampling frequency of the labels. Default 1 Hz.
         """
         # Resample Data
-        self.ref = Annotation(ref.events, fs, round(len(ref.mask) / ref.fs * fs))
-        self.hyp = Annotation(hyp.events, fs, round(len(hyp.mask) / hyp.fs * fs))
+
+        self.ref = Annotation(ref.events, fs, int(round(len(ref.mask) / ref.fs * fs)))
+        self.hyp = Annotation(hyp.events, fs, int(round(len(hyp.mask) / hyp.fs * fs)))
 
         if len(self.ref.mask) != len(self.hyp.mask):
             raise ValueError(("The number of samples in the reference Annotation"
@@ -126,7 +128,7 @@ class EventScoring(_Scoring):
                 Defaults to default values.
         """
         # Resample data
-        self.fs = 10  # Operate at a time precision of 10 Hz
+        self.fs = 1/12  # Operate at a time precision of 10 Hz
         self.ref = Annotation(ref.events, self.fs, round(len(ref.mask) / ref.fs * self.fs))
         self.hyp = Annotation(hyp.events, self.fs, round(len(hyp.mask) / hyp.fs * self.fs))
 
@@ -147,16 +149,19 @@ class EventScoring(_Scoring):
         self.tpMask = np.zeros_like(self.ref.mask)
         extendedRef = EventScoring._extendEvents(self.ref, param.toleranceStart, param.toleranceEnd)
         for event in extendedRef.events:
-            relativeOverlap = (np.sum(self.hyp.mask[round(event[0] * self.fs):round(event[1] * self.fs)]) / self.fs
-                               ) / (event[1] - event[0])
+            start_idx = int(round(event[0] * self.fs))
+            end_idx = int(round(event[1] * self.fs))
+            relativeOverlap = (np.sum(self.hyp.mask[start_idx:end_idx]) / self.fs) / (event[1] - event[0])
             if relativeOverlap > param.minOverlap + 1e-6:
                 self.tp += 1
-                self.tpMask[round(event[0] * self.fs):round(event[1] * self.fs)] = 1
+                self.tpMask[start_idx: end_idx] = 1
 
         # Count False detections
         self.fp = 0
         for event in self.hyp.events:
-            if np.any(~self.tpMask[round(event[0] * self.fs):round(event[1] * self.fs)]):
+            start_idx = int(round(event[0] * self.fs))
+            end_idx = int(round(event[1] * self.fs))
+            if np.any(~self.tpMask[start_idx:end_idx]):
                 self.fp += 1
 
         self.computeScores()
