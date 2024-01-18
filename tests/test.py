@@ -154,54 +154,59 @@ class TestEventScoring(unittest.TestCase):
         numSamples = 60 * 60 * fs  # 1 hour
 
         # Simple events
+        message = 'Simple events'
         ref = Annotation([(40, 60)], fs, numSamples)
         hyp = Annotation([(10, 20), (42, 65)], fs, numSamples)
         param = scoring.EventScoring.Parameters(toleranceStart=0,
                                                 toleranceEnd=10,
                                                 minDurationBetweenEvents=0)
         scores = scoring.EventScoring(ref, hyp, param)
-        np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity no detections')
-        np.testing.assert_equal(scores.precision, 0.5, 'precision no detections')
-        np.testing.assert_equal(scores.fpRate, 1 * 24, 'FP / day no detections')
+        np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity : ' + message)
+        np.testing.assert_equal(scores.precision, 0.5, 'precision : ' + message)
+        np.testing.assert_equal(scores.fpRate, 1 * 24, 'FP / day : ' + message)
 
         # Tolerance before events
         # REF      <----->
         # HYP    <------->
+        message = 'Tolerance before events'
         ref = Annotation([(40, 60)], fs, numSamples)
         hyp = Annotation([(39, 60)], fs, numSamples)
         param = scoring.EventScoring.Parameters(toleranceStart=1)
         scores = scoring.EventScoring(ref, hyp, param)
-        np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity no detections')
-        np.testing.assert_equal(scores.precision, 1, 'precision no detections')
-        np.testing.assert_equal(scores.fpRate, 0, 'FP / day no detections')
+        np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity : ' + message)
+        np.testing.assert_equal(scores.precision, 1, 'precision : ' + message)
+        np.testing.assert_equal(scores.fpRate, 0, 'FP / day : ' + message)
 
         # Split long events
         # REF <----->
         # HYP   <-------------------------->
         # SPLIT  <----------------><-------->
+        message = 'Split long events'
         ref = Annotation([(40, 60)], fs, numSamples)
         hyp = Annotation([(42, 65 + 6 * 60)], fs, numSamples)
         param = scoring.EventScoring.Parameters(maxEventDuration=5 * 60)
         scores = scoring.EventScoring(ref, hyp, param)
-        np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity no detections')
-        np.testing.assert_equal(scores.precision, 1 / 3, 'precision no detections')
-        np.testing.assert_equal(scores.fpRate, 2 * 24, 'FP / day no detections')
+        np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity : ' + message)
+        np.testing.assert_equal(scores.precision, 1 / 2, 'precision : ' + message)
+        np.testing.assert_equal(scores.fpRate, 1 * 24, 'FP / day : ' + message)
 
         # No detections
+        message = 'No detections'
         ref = Annotation([(40, 60)], fs, numSamples)
         hyp = Annotation([], fs, numSamples)
         scores = scoring.EventScoring(ref, hyp)
-        np.testing.assert_equal(scores.sensitivity, 0, 'sensitivity no detections')
-        np.testing.assert_equal(scores.precision, np.nan, 'precision no detections')
-        np.testing.assert_equal(scores.fpRate, 0, 'FP / day no detections')
+        np.testing.assert_equal(scores.sensitivity, 0, 'sensitivity : ' + message)
+        np.testing.assert_equal(scores.precision, np.nan, 'precision : ' + message)
+        np.testing.assert_equal(scores.fpRate, 0, 'FP / day : ' + message)
 
         # No events
+        message = 'No events'
         ref = Annotation([], fs, numSamples)
         hyp = Annotation([(40, 60)], fs, numSamples)
         scores = scoring.EventScoring(ref, hyp)
-        np.testing.assert_equal(scores.sensitivity, np.nan, 'sensitivity no events')
-        np.testing.assert_equal(scores.precision, 0, 'precision no events')
-        np.testing.assert_equal(scores.fpRate, 1 * 24, 'FP / day no events')
+        np.testing.assert_equal(scores.sensitivity, np.nan, 'sensitivity : ' + message)
+        np.testing.assert_equal(scores.precision, 0, 'precision : ' + message)
+        np.testing.assert_equal(scores.fpRate, 1 * 24, 'FP / day : ' + message)
 
         #
         # Seizure with typical distribution, some overlapping some not
@@ -221,7 +226,7 @@ class TestEventScoring(unittest.TestCase):
             minDurationBetweenEvents=0)
         scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 2 / 3, 'sensitivity typical distribution')
-        np.testing.assert_equal(scores.precision, 0.4, 'precision typical distribution')
+        np.testing.assert_equal(scores.precision, 0.5, 'precision typical distribution')
 
         param.minOverlap = 0.5
         scores = scoring.EventScoring(ref, hyp, param)
@@ -243,7 +248,7 @@ class TestEventScoring(unittest.TestCase):
         param.minOverlap = 0.0
         scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 1, 'sensitivity : ' + message)
-        np.testing.assert_equal(scores.precision, 5 / 7, 'precision : ' + message)
+        np.testing.assert_equal(scores.precision, 1, 'precision : ' + message)
 
         #
         # Long true seizure and many short predicted seizures​
@@ -260,7 +265,7 @@ class TestEventScoring(unittest.TestCase):
         param.minOverlap = 0.0
         scores = scoring.EventScoring(ref, hyp, param)
         np.testing.assert_equal(scores.sensitivity, 0.5, 'sensitivity : ' + message)
-        np.testing.assert_equal(scores.precision, 0.25, 'precision : ' + message)
+        np.testing.assert_equal(scores.precision, 0.5, 'precision : ' + message)
 
         # Typial distribution (one missed extended REF would hide FP)
         fs = 1

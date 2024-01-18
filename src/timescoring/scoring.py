@@ -156,7 +156,7 @@ class EventScoring(_Scoring):
         # Count False detections
         self.fp = 0
         for event in self.hyp.events:
-            if np.any(~self.tpMask[round(event[0] * self.fs):round(event[1] * self.fs)]):
+            if np.all(~self.tpMask[round(event[0] * self.fs):round(event[1] * self.fs)]):
                 self.fp += 1
 
         self.computeScores()
