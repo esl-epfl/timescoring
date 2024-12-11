@@ -14,9 +14,15 @@ description = "Library for measuring performance of time series classification"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "matplotlib>=3.7.1",
   "numpy>=1.24.3 ",
-  "nptyping>=2.5.0"]
+  "nptyping>=2.5.0"
+]
+
+[project.optional-dependencies]
+plotting = [
+    "matplotlib>=3.7.1",
+]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

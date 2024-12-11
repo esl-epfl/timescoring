@@ -32,6 +32,11 @@ python -m pip install -U pip
 python -m pip install -U timescoring
 ```
 
+To include visualization capabilities, install with the plotting extras:
+```bash
+python -m pip install -U "timescoring[plotting]"
+```
+
 The package is also available on [conda-forge](https://anaconda.org/conda-forge/timescoring). It can be installed using `conda` :
 
 ```bash
@@ -55,7 +60,7 @@ The `timescoring` package provides three classes :
 - `scoring.SampleScoring(ref, hyp)` : Compute sample based scoring
 - `scoring.EventScoring(ref, hyp)` : Compute event based scoring
 
-In addition it also provides functions to visualize the output of the scoring algorithm (see `visualization.py`).
+In addition it also provides functions to visualize the output of the scoring algorithm (see `visualization.py`). Note that visualization functions require the optional matplotlib dependency. Install with `pip install timescoring[plotting]` to enable these features.
 
 ### Parameters
 

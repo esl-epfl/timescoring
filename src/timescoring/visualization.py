@@ -1,7 +1,14 @@
-import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
-import matplotlib.colors as mc
-import colorsys
+try:
+    import matplotlib.pyplot as plt
+    import matplotlib.colors as mc
+    from matplotlib.axes import Axes
+    import colorsys
+except ImportError:
+    raise ImportError(
+            "Matplotlib is required for visualization functions. "
+            "Please install it with: pip install timescoring[plotting]"
+        )
+
 import numpy as np
 
 from .annotations import Annotation
