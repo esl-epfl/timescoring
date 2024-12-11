@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import List, Tuple
 
 import numpy as np
-from nptyping import Bool, NDArray, Shape
+from numpy.typing import NDArray
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class Annotation:
     are immutable to guarantee consistency between both data types.
     """
     events: List[Tuple[int, int]]
-    mask: NDArray[Shape["Size"], Bool]
+    mask: NDArray[np.bool_]
     fs: int
 
     def __init__(self, data, fs: int, numSamples: int = None):
