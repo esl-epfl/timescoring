@@ -40,12 +40,10 @@ class _Scoring:
             self.precision = np.nan  # no hyp event
 
         # F1 Score
-        if np.isnan(self.sensitivity) or np.isnan(self.precision):
-            self.f1 = np.nan
-        elif (self.sensitivity + self.precision) == 0:  # No overlap ref & hyp
-            self.f1 = 0
+        if (self.refTrue + self.fp) == 0:
+            self.f1 = np.nan  # No events
         else:
-            self.f1 = 2 * self.sensitivity * self.precision / (self.sensitivity + self.precision)
+            self.f1 = 2 * self.tp / (2 * self.tp + self.fp + (self.refTrue - self.tp))
 
         # FP Rate
         self.fpRate = self.fp / (self.numSamples / self.fs / 3600 / 24)  # FP per day
