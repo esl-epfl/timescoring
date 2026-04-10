@@ -9,7 +9,7 @@ import numpy as np
 from .annotations import Annotation
 
 
-class _Scoring:
+class Scoring:
     """" Base class for different scoring methods. The class provides the common
     attributes and computation of common scores based on these attributes.
     """
@@ -49,7 +49,7 @@ class _Scoring:
         self.fpRate = self.fp / (self.numSamples / self.fs / 3600 / 24)  # FP per day
 
 
-class SampleScoring(_Scoring):
+class SampleScoring(Scoring):
     """Calculates performance metrics on the sample by sample basis"""
 
     def __init__(self, ref: Annotation, hyp: Annotation, fs: int = 1):
@@ -84,7 +84,7 @@ class SampleScoring(_Scoring):
         self.computeScores()
 
 
-class EventScoring(_Scoring):
+class EventScoring(Scoring):
     """Calculates performance metrics on an event basis"""
     class Parameters:
         """Parameters for event scoring"""
